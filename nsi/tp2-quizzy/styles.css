@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+
+* {
+    font-family: 'Roboto', sans-serif;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    margin: 0;
+    background-color: #1e6091;
+}
+
+.quizzbox {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.core {
+    min-width: 415px;
+    max-width: 415px;
+    padding: 20px;
+    border-radius: 20px;
+    background-color: #184e77;
+    box-shadow: 4px 3px 8px -5px #000000;
+  	-webkit-box-shadow: 4px 3px 8px -5px #000000;
+}
+
+.core h1 {
+    text-align: center;
+    margin-top: 0;
+    color: white;
+}
+
+.core p {
+    color: rgb(204, 204, 204);
+}
+
+.core hr {
+    border: 1px solid black;
+}
+
+#validate {
+    padding: 5px 10px;
+    width: 100%;
+    border-radius: 10px;
+    cursor: pointer;
+    color: rgb(59, 130, 246);
+    border: 1px solid rgb(59, 130, 246);
+    transition: 0.5s;
+}
+
+#validate:hover {
+    color: rgb(255, 255, 255);
+    background-color: rgb(59, 130, 246);
+}
+
+.core .inline {
+    display: inline-block;
+}
+
+.core .right {
+    float: right;
+}
+
+.core .questionDiv {
+    margin-bottom: 15px;
+}
+
+.core .questionDiv .answer {
+    cursor: pointer;
+    outline: none;
+    padding: 3px 7px;
+    border: 2px solid rgb(59, 130, 246);
+    border-radius: 10px;
+}
+
+.core .questionDiv select {
+    width: 100%;
+    font-size: 15px;
+}
+
+.core .questionDiv input {
+    width: 397px;
+}
+
+.core .reload input {
+    position: relative;
+    background-color: rgb(59, 130, 246);
+    border-radius: 5px;
+    width: 25px;
+}
