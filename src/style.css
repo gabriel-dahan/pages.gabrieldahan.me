@@ -1,0 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..800&display=swap');
+
+@import "tailwindcss";
+@plugin "daisyui";
+
+.app__title-main {
+  font-family: 'Funnel Display', sans-serif;
+  font-weight: 800;
+
+  @apply text-amber-50 text-2xl ml-3 decoration-blue-500
+}
