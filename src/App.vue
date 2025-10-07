@@ -1,14 +1,15 @@
 <script setup lang="ts">
+import { RouterView } from 'vue-router';
+import Footer from './components/Footer.vue';
 import Header from './components/Header.vue'
-import Footer from './components/Footer.vue'
 
 </script>
 
 <template>
-  <div>
+  <div class="h-[calc(100%-257px)]">
     <Header />
 
-    <main class="container mx-auto p-4">
+    <main class="container mx-auto p-4 min-h-full flex flex-col items-center justify-center">
       <RouterView />
     </main>
 

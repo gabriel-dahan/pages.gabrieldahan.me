@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router';
+
 const title = import.meta.env.VITE_APP_TITLE
 
 </script>
@@ -28,7 +30,7 @@ const title = import.meta.env.VITE_APP_TITLE
                         <li><a>Item 3</a></li>
                     </ul>
                 </div>
-                <a class="app__title-main link">{{ title }}</a>
+                <RouterLink class="app__title-main link" to="/">{{ title }}</RouterLink>
             </div>
             <div class="navbar-center hidden lg:flex">
                 <ul class="menu menu-horizontal px-1">

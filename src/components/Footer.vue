@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted } from 'vue';
+import { RouterLink } from 'vue-router';
 
 
 const currentYear = new Date().getFullYear();
@@ -17,9 +18,9 @@ const linkedinLink = 'https://www.linkedin.com/in/gabriel-dahan-964b59371/en/';
         </div>
         <nav>
             <h6 class="footer-title">LINKS</h6>
-            <a class="link link-hover">Contact</a>
-            <a class="link link-hover">Projects</a>
-            <a class="link link-hover">CV/Resume</a>
+            <RouterLink class="link link-hover" to="/contact">Contact</RouterLink>
+            <RouterLink class="link link-hover" to="/projects">Projects</RouterLink>
+            <RouterLink class="link link-hover" to="/resume">CV/Resume</RouterLink>
         </nav>
         <nav>
             <h6 class="footer-title">SOCIAL</h6>

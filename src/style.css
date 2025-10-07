@@ -1,11 +1,45 @@
 @import url('https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Karla:ital,wght@0,200..800;1,200..800&display=swap');
 
 @import "tailwindcss";
 @plugin "daisyui";
+
+* {
+  font-family: 'Karla', sans-serif;
+  font-weight: 400;
+}
 
 .app__title-main {
   font-family: 'Funnel Display', sans-serif;
   font-weight: 800;
 
   @apply text-amber-50 text-2xl ml-3 decoration-blue-500
+}
+
+.app__title {
+  font-family: 'Funnel Display', sans-serif;
+  font-weight: 700;
+
+  @apply text-amber-50 text-4xl my-10 decoration-blue-500
+}
+
+.app__subtitle {
+  font-family: 'Funnel Display', sans-serif;
+  font-weight: 600;
+
+  @apply text-amber-50 text-2xl my-5 
+}
+
+strong {
+  font-weight: 600;
+  
+  @apply text-blue-200 
+}
+
+body {
+  height: 100vh;
+}
+
+#app {
+  height: 100%;
 }
