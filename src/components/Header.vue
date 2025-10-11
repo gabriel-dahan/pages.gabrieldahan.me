@@ -33,9 +33,6 @@ const title = import.meta.env.VITE_APP_TITLE
                     <li><RouterLink to="/resume">CV/Resume</RouterLink></li>
                 </ul>
             </div>
-            <div class="navbar-end">
-                <a class="btn">Button</a>
-            </div>
         </div>
     </header>
 </template>
