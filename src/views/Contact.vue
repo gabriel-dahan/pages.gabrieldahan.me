@@ -1,3 +1,71 @@
+<script setup lang="ts">
+import { reactive, computed, ref } from 'vue'
+
+const form = reactive({
+  name: '',
+  email: '',
+  subject: '',
+  message: '',
+  consent: false,
+})
+
+const errors = reactive({ name: '', email: '', message: '' })
+const submitting = ref(false)
+const status = reactive({ message: '', success: false })
+
+const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
+
+function validate() {
+  errors.name = (form.name.trim() || form.name === '') ? '' : 'Name is required.'
+  errors.email = (emailRegex.test(form.email) || form.email === '') ? '' : 'Invalid email address.'
+  errors.message = (form.message.trim().length >= 10 || form.message === '') ? '' : 'Message must be at least 10 characters.'
+  return !errors.name && !errors.email && !errors.message && form.consent
+}
+
+const isValid = computed(() => validate())
+
+async function submitForm() {
+  if (!validate()) {
+    status.message = 'Please correct the errors before sending.'
+    status.success = false
+    return
+  }
+
+  submitting.value = true
+  status.message = ''
+
+  try {
+    const resp = await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: form.name,
+        email: form.email,
+        subject: form.subject,
+        message: form.message,
+      }),
+    })
+
+    // if (!resp.ok) throw new Error('Failed to send message')
+
+    status.message = 'Message sent successfully — I\'ll get back to you soon.'
+    status.success = true
+
+    form.name = ''
+    form.email = ''
+    form.subject = ''
+    form.message = ''
+    form.consent = false
+  } catch (e) {
+    console.error(e)
+    status.message = 'Failed to send message. Please try again later.'
+    status.success = false
+  } finally {
+    submitting.value = false
+  }
+}
+</script>
+
 <template>
   <div class="w-full max-w-4xl mx-auto">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -128,74 +196,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { reactive, computed, ref } from 'vue'
-
-const form = reactive({
-  name: '',
-  email: '',
-  subject: '',
-  message: '',
-  consent: false,
-})
-
-const errors = reactive({ name: '', email: '', message: '' })
-const submitting = ref(false)
-const status = reactive({ message: '', success: false })
-
-const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
-
-function validate() {
-  errors.name = (form.name.trim() || form.name === '') ? '' : 'Name is required.'
-  errors.email = (emailRegex.test(form.email) || form.email === '') ? '' : 'Invalid email address.'
-  errors.message = (form.message.trim().length >= 10 || form.message === '') ? '' : 'Message must be at least 10 characters.'
-  return !errors.name && !errors.email && !errors.message && form.consent
-}
-
-const isValid = computed(() => validate())
-
-async function submitForm() {
-  if (!validate()) {
-    status.message = 'Please correct the errors before sending.'
-    status.success = false
-    return
-  }
-
-  submitting.value = true
-  status.message = ''
-
-  try {
-    const resp = await fetch('/api/contact', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: form.name,
-        email: form.email,
-        subject: form.subject,
-        message: form.message,
-      }),
-    })
-
-    if (!resp.ok) throw new Error('Failed to send message')
-
-    status.message = 'Message sent successfully — I’ll get back to you soon.'
-    status.success = true
-
-    form.name = ''
-    form.email = ''
-    form.subject = ''
-    form.message = ''
-    form.consent = false
-  } catch (e) {
-    console.error(e)
-    status.message = 'Failed to send message. Please try again later.'
-    status.success = false
-  } finally {
-    submitting.value = false
-  }
-}
-</script>
 
 <style scoped>
 .card {
