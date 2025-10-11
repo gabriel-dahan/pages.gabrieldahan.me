@@ -1,8 +1,17 @@
 <script setup lang="ts">
 import ProjectCard from '../components/ProjectCard.vue';
 
-const projects = {
-    comx: {
+interface Project {
+  title: string
+  banner: string
+  description: string
+  themes: string[]
+  link: string
+  githubLink?: string
+}
+
+const projects: Project[] = [
+    {
         title: "COMX",
         banner: "",
         description: "A comics/manga/... reading platform with AI-driven translation.",
@@ -10,7 +19,7 @@ const projects = {
         link: 'https://comx.click/',
         // githubLink: 'https://github.com/gabriel-dahan/comx-app.git' // <-- Private repository
     },
-    vadermap: {
+    {
         title: "VaderMap",
         banner: "",
         description: "A private open-source map featuring Invader's artworks.",
@@ -18,7 +27,7 @@ const projects = {
         link: 'https://vaderm.app/',
         githubLink: 'https://github.com/gabriel-dahan/vadermap.git'
     },
-    personalWebsite: {
+    {
         title: "Pages",
         banner: "",
         description: "My personal website, portfolio and blog.",
@@ -26,7 +35,7 @@ const projects = {
         link: 'https://gabrieldahan.me/',
         githubLink: 'https://github.com/gabriel-dahan/pages.gabrieldahan.me.git'
     }
-}
+]
 </script>
 
 <template>

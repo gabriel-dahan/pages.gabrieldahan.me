@@ -35,7 +35,7 @@ async function submitForm() {
   status.message = ''
 
   try {
-    const resp = await fetch('/api/contact', {
+    await fetch('/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -45,8 +45,6 @@ async function submitForm() {
         message: form.message,
       }),
     })
-
-    // if (!resp.ok) throw new Error('Failed to send message')
 
     status.message = 'Message sent successfully — I\'ll get back to you soon.'
     status.success = true

@@ -3,7 +3,7 @@ import ExternalLinkIcon from './icons/ExternalLinkIcon.vue';
 import GitHubIcon from './icons/GitHubIcon.vue';
 
 
-const props = defineProps({
+defineProps({
     title: {
         type: String,
         default: 'Project Title'

@@ -1,7 +1,7 @@
 <template>
     <div class="pdf-viewer">
         <iframe
-            src="/src/assets/International_CV.pdf"
+            src="/International_CV.pdf"
             class="pdf-frame"
             title="My PDF File"
         ></iframe>
