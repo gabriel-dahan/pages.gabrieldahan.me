@@ -1,15 +1,26 @@
 import express from 'express'
 import nodemailer from 'nodemailer'
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 import dotenv from 'dotenv'
 dotenv.config({
-  path: 'src/.env.server'
+  path: '.env.server'
 })
 
-const app = express()
-app.use(express.json())
+const DEBUG = Number(process.env.DEBUG)
 
-// Allow requests from your Vue frontend (for dev)
+let app = express()
+
+if (!DEBUG) {
+  app.use(express.static(path.join(__dirname, 'app')));
+} else {
+  app.use(express.json())
+}
+
 app.use((_, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
@@ -58,5 +69,15 @@ app.post('/api/contact', async (req, res) => {
   }
 })
 
+app.get('/api', (_, res) => {
+  res.json({ message: 'API served!' });
+});
+
+if (!DEBUG) {
+  app.get(/.*/, (_, res) => {
+    res.sendFile(path.join(__dirname, 'app', 'index.html'));
+  });
+}
+
 const PORT = process.env.SERVER_PORT || 3000
-app.listen(PORT, () => console.log(`✅ Server running on http://localhost:${PORT}`))
+app.listen(PORT, () => console.log(` --> Server running on http://localhost:${PORT} [${DEBUG ? 'DEBUG MODE' : 'PRODUCTION'}]`))
