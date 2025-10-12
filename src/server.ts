@@ -14,11 +14,10 @@ dotenv.config({
 const DEBUG = Number(process.env.DEBUG)
 
 let app = express()
+app.use(express.json());
 
 if (!DEBUG) {
   app.use(express.static(path.join(__dirname, 'app')));
-} else {
-  app.use(express.json())
 }
 
 app.use((_, res, next) => {
