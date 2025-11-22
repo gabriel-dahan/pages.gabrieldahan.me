@@ -12,6 +12,14 @@ interface Project {
 
 const projects: Project[] = [
     {
+        title: "BigBrother",
+        banner: "",
+        description: "A open-source software that generates complete datasets and databases analysis.",
+        themes: ["Python", "SQL", "LaTeX"],
+        link: "",
+        githubLink: "https://github.com/kevinbrgl/bigbrother.git"
+    },
+    {
         title: "COMX",
         banner: "",
         description: "A comics/manga/... reading platform with AI-driven translation.",
@@ -34,7 +42,7 @@ const projects: Project[] = [
         themes: ["VueJS", "TypeScript", "Vite", "DaisyUI"],
         link: 'https://gabrieldahan.me/',
         githubLink: 'https://github.com/gabriel-dahan/pages.gabrieldahan.me.git'
-    }
+    },
 ]
 </script>
 
