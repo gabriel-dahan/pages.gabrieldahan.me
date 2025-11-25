@@ -12,9 +12,17 @@ interface Project {
 
 const projects: Project[] = [
     {
+        title: "BloomScape",
+        banner: "",
+        description: "[UNDER DEV] BloomScape is a web-based, persistent multiplayer game. It features a complex closed economy where players trade flowers and use sap as a virtual currency.",
+        themes: ["NextJS", "TypeScript", "three.js"],
+        link: "",
+        githubLink: "https://github.com/gabriel-dahan/bloomscape"
+    },
+    {
         title: "BigBrother",
         banner: "",
-        description: "A open-source software that generates complete datasets and databases analysis.",
+        description: "[UNDER DEV] A open-source software that generates complete datasets and databases analysis.",
         themes: ["Python", "SQL", "LaTeX"],
         link: "",
         githubLink: "https://github.com/kevinbrgl/bigbrother.git"
@@ -22,7 +30,7 @@ const projects: Project[] = [
     {
         title: "COMX",
         banner: "",
-        description: "A comics/manga/... reading platform with AI-driven translation.",
+        description: "[UNDER DEV] A comics/manga/... reading platform with AI-driven translation.",
         themes: ["VueJS", "TypeScript"],
         link: 'https://comx.click/',
         // githubLink: 'https://github.com/gabriel-dahan/comx-app.git' // <-- Private repository
@@ -30,16 +38,17 @@ const projects: Project[] = [
     {
         title: "VaderMap",
         banner: "",
-        description: "A private open-source map featuring Invader's artworks.",
+        description: "An open-source mapping system featuring Invader's artworks.",
         themes: ["Python", "Flask"],
-        link: 'https://vaderm.app/',
+        // link: 'https://vaderm.app/', // <-- Not online anymore
+        link: "",
         githubLink: 'https://github.com/gabriel-dahan/vadermap.git'
     },
     {
         title: "Pages",
         banner: "",
         description: "My personal website, portfolio and blog.",
-        themes: ["VueJS", "TypeScript", "Vite", "DaisyUI"],
+        themes: ["VueJS", "TypeScript"],
         link: 'https://gabrieldahan.me/',
         githubLink: 'https://github.com/gabriel-dahan/pages.gabrieldahan.me.git'
     },
