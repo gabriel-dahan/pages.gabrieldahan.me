@@ -67,8 +67,7 @@ async function submitForm() {
 <template>
   <div class="w-full max-w-4xl mx-auto">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Left: Contact info -->
-      <div class="card bg-base-300 shadow-xl p-6">
+      <div class="card shadow-xl p-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200">
         <div class="card-body">
           <h2 class="card-title text-2xl">Contact Me</h2>
           <p class="text-sm opacity-80 mb-4">
@@ -103,8 +102,7 @@ async function submitForm() {
         </div>
       </div>
 
-      <!-- Right: Form -->
-      <form @submit.prevent="submitForm" class="card bg-base-300 shadow-lg p-6" novalidate>
+      <form @submit.prevent="submitForm" class="card shadow-lg p-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200" novalidate>
         <div class="card-body">
           <div class="grid gap-4">
             <div>
@@ -115,7 +113,7 @@ async function submitForm() {
                 v-model="form.name"
                 type="text"
                 placeholder="Your name"
-                class="input input-bordered w-full"
+                class="input input-bordered w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200"
                 :class="{ 'input-error': errors.name }"
               />
               <p v-if="errors.name" class="text-error text-sm mt-1">{{ errors.name }}</p>
@@ -129,7 +127,7 @@ async function submitForm() {
                 v-model="form.email"
                 type="email"
                 placeholder="you@email.com"
-                class="input input-bordered w-full"
+                class="input input-bordered w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200"
                 :class="{ 'input-error': errors.email }"
               />
               <p v-if="errors.email" class="text-error text-sm mt-1">{{ errors.email }}</p>
@@ -143,7 +141,7 @@ async function submitForm() {
                 v-model="form.subject"
                 type="text"
                 placeholder="Message subject"
-                class="input input-bordered w-full"
+                class="input input-bordered w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200"
               />
             </div>
 
@@ -155,7 +153,7 @@ async function submitForm() {
                 v-model="form.message"
                 rows="6"
                 placeholder="Write your message..."
-                class="textarea textarea-bordered w-full"
+                class="textarea textarea-bordered w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200"
                 :class="{ 'textarea-error': errors.message }"
               ></textarea>
               <p v-if="errors.message" class="text-error text-sm mt-1">{{ errors.message }}</p>

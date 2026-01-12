@@ -1,3 +1,7 @@
+<script setup lang="ts">
+import { RouterLink } from 'vue-router';
+</script>
+
 <template>
     <div>
         <h1 class="app__title">Gabriel Dahan</h1>
@@ -38,6 +42,18 @@
             if you’d like to collaborate or discuss new projects!
         </p>
     </section>
+
+    <section>
+        <p class="text-center">
+            Go check out my 
+            <RouterLink 
+                to="/projects" 
+                class="btn bg-gray-900 text-white btn-sm rounded-2xl border-none m-3 py-0 btn-glow"
+            >
+                Projects
+            </RouterLink>
+        </p>
+    </section>
 </template>
 
 <style scoped>
@@ -61,5 +77,23 @@
 
 .about a {
     text-decoration: underline;
+}
+
+.btn-glow {
+  transition: all 0.3s ease-in-out;
+  animation: glowing 3s infinite;
+}
+
+@keyframes glowing {
+  0% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); 
+  }
+  50% {
+    box-shadow: 0 0 20px 0 rgba(99, 102, 241, 0.7); 
+    transform: scale(1.05); 
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); 
+  }
 }
 </style>

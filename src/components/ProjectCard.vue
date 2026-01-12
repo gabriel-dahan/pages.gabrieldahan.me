@@ -33,7 +33,7 @@ defineProps({
 </script>
 
 <template>
-    <div class="card bg-base-200 w-90 shadow-sm">
+    <div class="card w-90 shadow-sm bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200">
         <figure>
             <img
             :src="banner" />
