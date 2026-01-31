@@ -14,7 +14,7 @@ const projects: Project[] = [
     {
         title: "Contextify",
         banner: "",
-        description: "A way to easily to share your project tree and content with LLMs using a single Markdown file !",
+        description: "A way to easily share your project tree and content with LLMs using a single Markdown file !",
         themes: ["Python", "LLMs"],
         link: "",
         githubLink: "https://github.com/gabriel-dahan/prompt-contextify"
