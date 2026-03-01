@@ -5,7 +5,8 @@
     "moduleResolution": "NodeNext",
     "target": "ES2022",
     "outDir": "./dist-server",
-    "noEmit": false
+    "noEmit": false,
+    "allowImportingTsExtensions": false
   },
   "include": ["src/server.ts"]
 }

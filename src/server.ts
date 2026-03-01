@@ -8,22 +8,22 @@ import { v4 as uuidv4 } from 'uuid';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const isTsNode = __filename.endsWith('.ts');
+const projectRoot = isTsNode ? path.resolve(__dirname, '..') : __dirname;
+
 import dotenv from 'dotenv'
 dotenv.config({
-  path: '.env.server'
+  path: path.join(projectRoot, '.env.server')
 })
 
 const DEBUG = Number(process.env.DEBUG)
-const projectRoot = DEBUG ? path.resolve(__dirname, '..') : __dirname;
 
 let app = express()
 app.use(express.json());
 
-// In-memory token storage: token -> { username, expiresAt }
 const sessions = new Map<string, { username: string; expiresAt: number }>();
 const SESSION_DURATION = 1000 * 60 * 60 * 24; // 24 hours
 
-// Helper to authenticate requests
 const requireAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1] || req.query.token as string;
@@ -133,18 +133,39 @@ app.get('/api/private/files', requireAuth, (req, res) => {
   const baseDir = path.join(projectRoot, 'private_files');
   const userDir = path.join(baseDir, username);
 
-  let filesList: { name: string; size: number; path: string }[] = [];
+  let filesList: { name: string; size: number; path: string; virtualPath: string; metadata?: any }[] = [];
 
-  // Helper to read directory
-  const readDirSafe = (dir: string, prefix: string) => {
+  // Helper to read directory recursively
+  const readDirSafe = (dir: string, prefix: string, virtualPrefix: string) => {
     if (fs.existsSync(dir)) {
       const entries = fs.readdirSync(dir, { withFileTypes: true });
       for (const entry of entries) {
-        if (entry.isFile()) {
+        if (entry.isDirectory()) {
+          const newPrefix = prefix ? `${prefix}/${entry.name}` : entry.name;
+          const newVirtualPrefix = virtualPrefix ? `${virtualPrefix}/${entry.name}` : entry.name;
+          readDirSafe(path.join(dir, entry.name), newPrefix, newVirtualPrefix);
+        } else if (entry.isFile()) {
+           // Skip metadata files themselves
+           if (entry.name.startsWith('_') && entry.name.endsWith('.json')) {
+               continue;
+           }
+
+           let metadata = undefined;
+           const metaPath = path.join(dir, `_${entry.name}.json`);
+           if (fs.existsSync(metaPath)) {
+               try {
+                   metadata = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+               } catch (e) {
+                   console.error(`Failed to parse metadata for ${entry.name}`, e);
+               }
+           }
+
            filesList.push({
              name: entry.name,
              size: fs.statSync(path.join(dir, entry.name)).size,
-             path: prefix ? `${prefix}/${entry.name}` : entry.name
+             path: prefix ? `${prefix}/${entry.name}` : entry.name,
+             virtualPath: virtualPrefix ? `${virtualPrefix}/${entry.name}` : entry.name,
+             metadata
            });
         }
       }
@@ -152,11 +173,12 @@ app.get('/api/private/files', requireAuth, (req, res) => {
   };
 
   try {
-    // Read global files (in private_files/)
-    readDirSafe(baseDir, '');
+    // Read global files (in private_files/global)
+    const globalDir = path.join(baseDir, 'global');
+    readDirSafe(globalDir, 'global', '');
     
     // Read user specific files (in private_files/username/)
-    readDirSafe(userDir, username);
+    readDirSafe(userDir, username, '');
 
     res.json({ files: filesList });
   } catch (err) {
@@ -186,12 +208,12 @@ app.get('/api/private/file', requireAuth, (req, res) => {
     return res.status(403).json({ error: 'Access denied' });
   }
 
-  // Security check: if the path implies a user directory, ensure it is THEIR directory
+  // Security check: if the path implies a user directory, ensure it is THEIR directory or 'global'
   // e.g., if filepath is "family/example.txt", ensure username is "family"
   const filepathSegments = filepath.split('/');
   if (filepathSegments.length > 1) {
       const targetUser = filepathSegments[0];
-      if (targetUser !== username) {
+      if (targetUser !== username && targetUser !== 'global') {
           return res.status(403).json({ error: 'Access denied to other user directories' });
       }
   }

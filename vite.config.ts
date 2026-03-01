@@ -5,10 +5,10 @@ import tailwindcss from '@tailwindcss/vite'
 
 import dotenv from 'dotenv'
 dotenv.config({
-  path: 'src/.env.server'
+  path: '.env.server'
 })
 
-const PORT = process.env.SERVER_PORT
+const PORT = process.env.SERVER_PORT || 3002
 
 // https://vite.dev/config/
 export default defineConfig({

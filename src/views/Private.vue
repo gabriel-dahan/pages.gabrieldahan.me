@@ -79,7 +79,13 @@
         <!-- Table Header -->
         <div
           class="grid grid-cols-12 gap-4 px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-slate-700/50 bg-gray-50/80 dark:bg-slate-800/80 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-          <div class="col-span-8 sm:col-span-7">Name</div>
+          <div class="col-span-8 sm:col-span-7 flex items-center gap-2">
+            Name
+            <span v-if="currentFolder"
+              class="ml-2 font-normal lowercase tracking-normal bg-gray-200 dark:bg-slate-700 px-2 py-0.5 rounded text-gray-600 dark:text-slate-300">
+              / {{ currentFolder }}
+            </span>
+          </div>
           <div class="col-span-4 sm:col-span-3 text-right">Size</div>
           <div class="col-span-12 sm:col-span-2 hidden sm:block text-right">Action</div>
         </div>
@@ -90,7 +96,7 @@
           Decrypting vault contents...
         </div>
 
-        <div v-else-if="files.length === 0" class="p-16 text-center">
+        <div v-else-if="visibleItems.files.length === 0 && visibleItems.folders.length === 0" class="p-16 text-center">
           <div
             class="inline-flex w-16 h-16 rounded-full bg-gray-100 dark:bg-slate-800 items-center justify-center mb-4 border border-gray-200 dark:border-slate-700">
             <svg class="w-8 h-8 text-gray-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24"
@@ -105,7 +111,46 @@
 
         <!-- File Rows -->
         <div class="divide-y divide-gray-100 dark:divide-slate-700/30">
-          <div v-for="file in files" :key="file.name"
+
+          <!-- Back button -->
+          <div v-if="currentFolder"
+            class="group grid grid-cols-12 gap-4 px-4 sm:px-6 py-4 items-center hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors cursor-pointer"
+            @click="navigateUp">
+            <div class="col-span-12 flex items-center gap-3 overflow-hidden">
+              <div
+                class="w-10 h-10 rounded-lg bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+              </div>
+              <span class="text-gray-500 dark:text-slate-400 font-medium">.. (Go Back)</span>
+            </div>
+          </div>
+
+          <!-- Folders -->
+          <div v-for="folder in visibleItems.folders" :key="'folder-' + folder"
+            class="group grid grid-cols-12 gap-4 px-4 sm:px-6 py-4 items-center hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors cursor-pointer"
+            @click="navigateTo(folder)">
+            <!-- Icon -->
+            <div class="col-span-8 sm:col-span-7 flex items-center gap-3 overflow-hidden">
+              <div
+                class="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/40 border border-indigo-100 dark:border-indigo-800 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-indigo-500 dark:text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                </svg>
+              </div>
+              <span
+                class="text-gray-700 dark:text-slate-200 font-medium truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">{{
+                folder }}</span>
+            </div>
+            <div class="col-span-4 sm:col-span-3 text-right text-sm text-gray-400 dark:text-slate-500 tabular-nums">
+              Folder</div>
+            <div class="col-span-12 sm:col-span-2 hidden sm:flex justify-end"></div>
+          </div>
+
+          <!-- Files -->
+          <div v-for="file in visibleItems.files" :key="file.name"
             class="group grid grid-cols-12 gap-4 px-4 sm:px-6 py-4 items-center hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors cursor-pointer"
             @click="openFile(file.name, file.path)">
 
@@ -119,17 +164,23 @@
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <span
-                class="text-gray-700 dark:text-slate-200 font-medium truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-300 flex-1 transition-colors">{{
-                  file.name }}</span>
+              <div class="flex flex-col flex-1 overflow-hidden">
+                <span
+                  class="text-gray-700 dark:text-slate-200 font-medium truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
+                  {{ file.metadata && file.metadata.alias ? file.metadata.alias : file.name }}
+                </span>
+                <span v-if="file.metadata && file.metadata.description"
+                  class="text-xs text-gray-500 dark:text-slate-400 truncate mt-0.5">
+                  {{ file.metadata.description }}
+                </span>
+              </div>
             </div>
 
             <div class="col-span-4 sm:col-span-3 text-right text-sm text-gray-500 dark:text-slate-400 tabular-nums">
               {{ formatBytes(file.size) }}
             </div>
 
-            <div
-              class="col-span-12 sm:col-span-2 hidden sm:flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="col-span-12 sm:col-span-2 hidden sm:flex justify-end transition-opacity">
               <button @click.stop="openFile(file.name, file.path, true)"
                 class="p-2 text-gray-400 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-indigo-50 dark:hover:bg-slate-700 rounded-md transition-colors"
                 title="Download">
@@ -147,7 +198,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 
 const isAuthenticated = ref(false);
 const username = ref('');
@@ -156,11 +207,49 @@ const error = ref('');
 const isLoading = ref(false);
 const isLoadingFiles = ref(false);
 const authenticatedUser = ref('');
-const files = ref<{ name: string, size: number, path: string }[]>([]);
+const files = ref<{ name: string, size: number, path: string, virtualPath: string, metadata?: any }[]>([]);
+const currentFolder = ref('');
 
-// Using a relative URL handles dev vs prod server gracefully (same origin mostly or via proxy)
-// Assuming proxy in vite setup or absolute URL needed
-const API_BASE = import.meta.env.DEV ? 'http://localhost:3000/api/private' : '/api/private';
+const visibleItems = computed(() => {
+  const folders = new Set<string>();
+  const f: any[] = [];
+
+  for (const file of files.value) {
+    if (!file.virtualPath) continue;
+
+    const inCurrentFolder = currentFolder.value === ''
+      ? true
+      : file.virtualPath.startsWith(currentFolder.value + '/');
+
+    if (inCurrentFolder) {
+      const relativePath = currentFolder.value === ''
+        ? file.virtualPath
+        : file.virtualPath.slice(currentFolder.value.length + 1);
+
+      if (!relativePath.includes('/')) {
+        f.push(file);
+      } else {
+        folders.add(relativePath.split('/')[0]);
+      }
+    }
+  }
+
+  return { folders: Array.from(folders).sort(), files: f };
+});
+
+const navigateTo = (folder: string) => {
+  currentFolder.value = currentFolder.value ? currentFolder.value + '/' + folder : folder;
+};
+
+const navigateUp = () => {
+  if (!currentFolder.value) return;
+  const parts = currentFolder.value.split('/');
+  parts.pop();
+  currentFolder.value = parts.join('/');
+};
+
+// Rely on Vite's proxy in dev, and relative paths in prod
+const API_BASE = '/api/private';
 
 const checkActiveSession = () => {
   const token = localStorage.getItem('vault_token');
@@ -268,4 +357,5 @@ const formatBytes = (bytes: number) => {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
+
 </script>
