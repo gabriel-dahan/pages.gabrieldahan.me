@@ -13,7 +13,7 @@ lerna-debug.log*
 node_modules
 package-lock.json
 dist
-dist-ssr
+dist-server
 *.local
 
 # Editor directories and files
@@ -29,3 +29,5 @@ dist-ssr
 
 # Stat. project DB
 stu_qqq.rds
+
+private_files/
