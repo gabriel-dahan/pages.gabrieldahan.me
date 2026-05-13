@@ -2,12 +2,12 @@
 import ProjectCard from '../components/ProjectCard.vue';
 
 interface Project {
-  title: string
-  banner: string
-  description: string
-  themes: string[]
-  link: string
-  githubLink?: string
+    title: string
+    banner: string
+    description: string
+    themes: string[]
+    link: string
+    githubLink?: string
 }
 
 const projects: Project[] = [
@@ -55,19 +55,27 @@ const projects: Project[] = [
 
 const academicProjects: Project[] = [
     {
+        title: "SPORTIX",
+        banner: "",
+        description: "Data Processing/Analysis app for sports - academic project at ENSAI (report in french).",
+        themes: ["Python", "OOP", "Quarto", "Pandas", "ORM"],
+        link: "/files/academic_projects/data_processing_project.pdf",
+        githubLink: "https://github.com/gabriel-dahan/sportix-project"
+    },
+    {
         title: "Economics Project at ENSAI",
         banner: "",
-        description: "[NOT COMPLETED] Current academic project in economics (french). Theme: \"Skills Obsolescence and Employment\"",
+        description: "First-year economics project at ENSAI (in french). Theme: \"Skills Obsolescence and Employment\"",
         themes: ["Economics", "LaTeX", "Quarto"],
-        link: "",
-        githubLink: ""
+        link: "/files/academic_projects/economics_project.pdf",
+        githubLink: "https://github.com/gabriel-dahan/projet-economie-1A-ENSAI"
     },
     {
         title: "Statistics Project at ENSAI",
         banner: "",
-        description: "[NOT COMPLETED] Current academic project in statistics (french). Theme: \"Technologies and educational performance\"",
-        themes: ["R", "Quarto", "LaTeX", "Stats", "Data"],
-        link: "",
+        description: "First-year statistics project at ENSAI (in french). Theme: \"Technologies and educational performance\"",
+        themes: ["R", "Quarto", "LaTeX", "Stats", "Data Science"],
+        link: "/files/academic_projects/stats_project_first_year.pdf",
         githubLink: "https://github.com/gabriel-dahan/projet-statistique-1A-ENSAI"
     },
     {
@@ -75,7 +83,7 @@ const academicProjects: Project[] = [
         banner: "",
         description: "In french prepa, \"TIPE\" is a Two-Year research project on a specific theme (here \"Transition, transformation, conversion\"). My project was about [Terrain generation using Heightmaps] and various algorithms to generate heightmaps. If interested, click on the GitHub icon and/or the link to access the presentation (french).",
         themes: ["Python", "OCaml", "Heightmaps", "Perlin"],
-        link: '/files/heightmapper_presentation.pdf',
+        link: '/files/academic_projects/tipe_presentation.pdf',
         githubLink: 'https://github.com/gabriel-dahan/heightmapper'
     }
 ]
@@ -85,32 +93,16 @@ const academicProjects: Project[] = [
     <div class="flex flex-col gap-6">
         <h1 class="app__subtitle text-center">Projects</h1>
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mx-auto max-w-7xl">
-            <ProjectCard 
-                v-for="proj in projects" 
-                :key="proj.title"
-                :banner="proj.banner" 
-                :title="proj.title" 
-                :themes="proj.themes" 
-                :description="proj.description" 
-                :link="proj.link" 
-                :githubLink="proj.githubLink"
-            />
+            <ProjectCard v-for="proj in projects" :key="proj.title" :banner="proj.banner" :title="proj.title"
+                :themes="proj.themes" :description="proj.description" :link="proj.link" :githubLink="proj.githubLink" />
         </div>
 
         <hr class="h-px my-8 bg-neutral-400 border-0">
 
         <h1 class="app__subtitle text-center">Academic Projects</h1>
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mx-auto max-w-7xl">
-            <ProjectCard 
-                v-for="proj in academicProjects" 
-                :key="proj.title"
-                :banner="proj.banner" 
-                :title="proj.title" 
-                :themes="proj.themes" 
-                :description="proj.description" 
-                :link="proj.link" 
-                :githubLink="proj.githubLink"
-            />
+            <ProjectCard v-for="proj in academicProjects" :key="proj.title" :banner="proj.banner" :title="proj.title"
+                :themes="proj.themes" :description="proj.description" :link="proj.link" :githubLink="proj.githubLink" />
         </div>
     </div>
 </template>

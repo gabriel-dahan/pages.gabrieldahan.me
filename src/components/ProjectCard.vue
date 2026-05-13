@@ -33,24 +33,29 @@ defineProps({
 </script>
 
 <template>
-    <div class="card w-90 shadow-sm bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200">
+    <div
+        class="card w-90 shadow-sm bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200">
         <figure>
-            <img
-            :src="banner" />
+            <img :src="banner" />
         </figure>
         <div class="card-body">
             <div class="absolute top-2 right-2 flex gap-2" v-if="link">
-                <a class="badge badge-soft badge-primary btn" :href="link" target="_blank">Link <ExternalLinkIcon /></a>
+                <a class="badge badge-soft badge-primary btn" :href="link" target="_blank">Link
+                    <ExternalLinkIcon />
+                </a>
             </div>
             <h2 class="card-title">
                 {{ title }}
             </h2>
             <p>{{ description }}</p>
-            <a :href="githubLink" target="_blank" class="absolute left-6 bottom-6" v-if="githubLink">
-                <GitHubIcon width="20" height="20"/>
-            </a>
-            <div class="card-actions justify-end mt-5">
-                <div class="badge badge-sm badge-outline" v-for="theme in themes">{{ theme }}</div>
+            <div class="card-actions justify-between items-end mt-5">
+                <a :href="githubLink" target="_blank" class="hover:opacity-70 transition-opacity" v-if="githubLink">
+                    <GitHubIcon width="20" height="20" />
+                </a>
+                <div v-else></div>
+                <div class="flex flex-wrap gap-1 justify-end">
+                    <div class="badge badge-sm badge-outline" v-for="theme in themes">{{ theme }}</div>
+                </div>
             </div>
         </div>
     </div>
