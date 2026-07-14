@@ -26,12 +26,12 @@ const closeMenu = () => {
                     </div>
                     <ul tabindex="0"
                         class="menu menu-sm dropdown-content bg-white dark:bg-gray-800 rounded-box mt-3 w-52 p-2 shadow-xl border border-gray-100 dark:border-gray-700 z-[100]">
-                        <li><RouterLink to="/projects" @click="closeMenu">Projects</RouterLink></li>
-                        <li><RouterLink to="/contact" @click="closeMenu">Contact</RouterLink></li>
-                        <li><RouterLink to="/resume" @click="closeMenu">CV/Resume</RouterLink></li>
+                        <li><RouterLink to="/projects" class="hover:text-indigo-500 active:bg-transparent" @click="closeMenu">Projects</RouterLink></li>
+                        <li><RouterLink to="/contact" class="hover:text-indigo-500 active:bg-transparent" @click="closeMenu">Contact</RouterLink></li>
+                        <li><RouterLink to="/resume" class="hover:text-indigo-500 active:bg-transparent" @click="closeMenu">CV/Resume</RouterLink></li>
                     </ul>
                 </div>
-                <RouterLink class="app__title-main link no-underline font-bold text-xl hover:text-indigo-500 transition-colors" to="/">{{ title }}</RouterLink>
+                <span class="ml-3"><<RouterLink class="app__title-main link no-underline font-bold text-xl hover:text-indigo-500 transition-colors" to="/">{{ title }}</RouterLink> /></span>
             </div>
             <div class="navbar-center hidden lg:flex">
                 <ul class="menu menu-horizontal px-1 font-medium">

@@ -30,7 +30,7 @@ const projects: Project[] = [
     {
         title: "COMX",
         banner: "",
-        description: "[UNDER DEV - PAUSED] A comics/manga/... reading platform with AI-driven translation.",
+        description: "A comics/manga/... reading platform with AI-driven translation (test phase - under development).",
         themes: ["VueJS", "TypeScript"],
         link: 'https://comx.click/',
         // githubLink: 'https://github.com/gabriel-dahan/comx-app.git' // <-- Private repository

@@ -12,8 +12,17 @@
 .app__title-main {
   font-family: 'Funnel Display', sans-serif;
   font-weight: 800;
+  text-decoration: underline;
+  text-decoration-color: #000000;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+  text-decoration-style: solid;
+  text-decoration-color: #000000;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+  text-decoration-style: solid;
 
-  @apply text-amber-50 text-2xl ml-3 decoration-blue-500
+  @apply text-amber-50 text-2xl decoration-blue-500
 }
 
 .app__title {
