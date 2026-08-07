@@ -31,3 +31,7 @@ dist-server
 stu_qqq.rds
 
 private_files/
+
+# App SQLite DB
+data/*.sqlite
+data/*.sqlite-*

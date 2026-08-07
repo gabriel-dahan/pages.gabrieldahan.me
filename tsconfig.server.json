@@ -5,8 +5,13 @@
     "moduleResolution": "NodeNext",
     "target": "ES2022",
     "outDir": "./dist-server",
+    "rootDir": "./src",
     "noEmit": false,
-    "allowImportingTsExtensions": false
+    "allowImportingTsExtensions": false,
+    "verbatimModuleSyntax": false,
+    "erasableSyntaxOnly": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
-  "include": ["src/server.ts"]
+  "include": ["src/server.ts", "src/db.ts"]
 }

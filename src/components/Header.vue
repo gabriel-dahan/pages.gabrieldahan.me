@@ -9,38 +9,43 @@ const closeMenu = () => {
         elem.blur();
     }
 };
-
 </script>
 
 <template>
-    <header>
-        <div class="navbar bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-sm text-gray-800 dark:text-gray-200">
-            <div class="navbar-start">
-                <div class="dropdown">
-                    <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 6h16M4 12h8m-8 6h16" />
-                        </svg>
+    <header class="w-full border-b border-[var(--term-border)] bg-[var(--term-bg-elevated)]">
+        <div class="w-full flex items-center justify-between gap-3 px-3 sm:px-6 py-3 font-mono text-sm">
+            <div class="flex items-center gap-2 min-w-0">
+                <div class="dropdown lg:hidden">
+                    <div tabindex="0" role="button" class="term-btn px-2 py-1" aria-label="Open menu">
+                        <span aria-hidden="true">[=]</span>
                     </div>
                     <ul tabindex="0"
-                        class="menu menu-sm dropdown-content bg-white dark:bg-gray-800 rounded-box mt-3 w-52 p-2 shadow-xl border border-gray-100 dark:border-gray-700 z-[100]">
-                        <li><RouterLink to="/projects" class="hover:text-indigo-500 active:bg-transparent" @click="closeMenu">Projects</RouterLink></li>
-                        <li><RouterLink to="/contact" class="hover:text-indigo-500 active:bg-transparent" @click="closeMenu">Contact</RouterLink></li>
-                        <li><RouterLink to="/resume" class="hover:text-indigo-500 active:bg-transparent" @click="closeMenu">CV/Resume</RouterLink></li>
+                        class="menu menu-sm dropdown-content mt-2 w-56 p-2 z-[100] border border-[var(--term-border)] bg-[var(--term-bg-panel)]">
+                        <li>
+                            <RouterLink to="/projects" class="term-link font-mono" @click="closeMenu">./projects</RouterLink>
+                        </li>
+                        <li>
+                            <RouterLink to="/contact" class="term-link font-mono" @click="closeMenu">./contact</RouterLink>
+                        </li>
+                        <li>
+                            <RouterLink to="/resume" class="term-link font-mono" @click="closeMenu">./resume</RouterLink>
+                        </li>
                     </ul>
                 </div>
-                <span class="ml-3"><<RouterLink class="app__title-main link no-underline font-bold text-xl hover:text-indigo-500 transition-colors" to="/">{{ title }}</RouterLink> /></span>
+
+                <RouterLink
+                    class="app__title-main truncate"
+                    to="/"
+                >
+                    <span class="term-dim">~/</span>{{ title || 'pages' }}
+                </RouterLink>
             </div>
-            <div class="navbar-center hidden lg:flex">
-                <ul class="menu menu-horizontal px-1 font-medium">
-                    <li><RouterLink to="/projects" class="hover:text-indigo-500 active:bg-transparent">Projects</RouterLink></li>
-                    <li><RouterLink to="/contact" class="hover:text-indigo-500 active:bg-transparent">Contact</RouterLink></li>
-                    <li><RouterLink to="/resume" class="hover:text-indigo-500 active:bg-transparent">CV/Resume</RouterLink></li>
-                </ul>
-            </div>
-            <div class="navbar-end"></div>
+
+            <nav class="hidden lg:flex items-center gap-5 text-[var(--term-fg)]">
+                <RouterLink to="/projects" class="term-link">./projects</RouterLink>
+                <RouterLink to="/contact" class="term-link">./contact</RouterLink>
+                <RouterLink to="/resume" class="term-link">./resume</RouterLink>
+            </nav>
         </div>
     </header>
 </template>

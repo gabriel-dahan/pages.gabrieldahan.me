@@ -8,7 +8,7 @@ dotenv.config({
   path: '.env.server'
 })
 
-const PORT = process.env.SERVER_PORT || 3002
+const PORT = process.env.SERVER_PORT || 3000
 
 // https://vite.dev/config/
 export default defineConfig({

@@ -65,148 +65,102 @@ async function submitForm() {
 </script>
 
 <template>
-  <div class="w-full max-w-4xl mx-auto">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="card shadow-xl p-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200">
-        <div class="card-body">
-          <h2 class="card-title text-2xl">Contact Me</h2>
-          <p class="text-sm opacity-80 mb-4">
-            You can send me a message using this form or use the links in the footer.
-          </p>
+  <div class="w-full term-fade-in font-mono">
+    <h1 class="app__subtitle mb-6">
+      <span class="term-dim">$</span> ./contact
+    </h1>
 
-          <div class="space-y-3">
-            <div class="flex items-start gap-3">
-              <svg class="w-6 h-6 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none"
-                   viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8m-9 12V8" />
-              </svg>
-              <div>
-                <div class="font-medium">Email</div>
-                <div class="text-sm opacity-70">work@gabrieldahan.me</div>
-              </div>
-            </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+      <div class="term-frame" data-title="info">
+        <p class="term-dim text-sm mb-4">
+          You can send me a message using this form or use the links in the footer.
+        </p>
 
-            <div class="flex items-start gap-3">
-              <svg class="w-6 h-6 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none"
-                   viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                      d="M3 5h2l2 7 4-2 4 2 2-7h2" />
-              </svg>
-              <div>
-                <div class="font-medium">Location</div>
-                <div class="text-sm opacity-70">Rennes, France</div>
-              </div>
-            </div>
+        <div class="space-y-3 text-sm">
+          <div>
+            <div class="term-dim">email&gt;</div>
+            <div>work@gabrieldahan.me</div>
+          </div>
+          <div>
+            <div class="term-dim">location&gt;</div>
+            <div>Rennes, France</div>
           </div>
         </div>
       </div>
 
-      <form @submit.prevent="submitForm" class="card shadow-lg p-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200" novalidate>
-        <div class="card-body">
-          <div class="grid gap-4">
-            <div>
-              <label class="label mb-2">
-                <span class="label-text">Name</span>
-              </label>
-              <input
-                v-model="form.name"
-                type="text"
-                placeholder="Your name"
-                class="input input-bordered w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200"
-                :class="{ 'input-error': errors.name }"
-              />
-              <p v-if="errors.name" class="text-error text-sm mt-1">{{ errors.name }}</p>
-            </div>
+      <form @submit.prevent="submitForm" class="term-frame" data-title="compose" novalidate>
+        <div class="grid gap-4">
+          <div>
+            <label class="term-dim text-sm block mb-1">name&gt;</label>
+            <input
+              v-model="form.name"
+              type="text"
+              placeholder="_"
+              class="term-input"
+              :class="{ 'term-error': errors.name }"
+            />
+            <p v-if="errors.name" class="term-error text-xs mt-1">{{ errors.name }}</p>
+          </div>
 
-            <div>
-              <label class="label mb-2">
-                <span class="label-text">Email</span>
-              </label>
-              <input
-                v-model="form.email"
-                type="email"
-                placeholder="you@email.com"
-                class="input input-bordered w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200"
-                :class="{ 'input-error': errors.email }"
-              />
-              <p v-if="errors.email" class="text-error text-sm mt-1">{{ errors.email }}</p>
-            </div>
+          <div>
+            <label class="term-dim text-sm block mb-1">email&gt;</label>
+            <input
+              v-model="form.email"
+              type="email"
+              placeholder="_"
+              class="term-input"
+              :class="{ 'term-error': errors.email }"
+            />
+            <p v-if="errors.email" class="term-error text-xs mt-1">{{ errors.email }}</p>
+          </div>
 
-            <div>
-              <label class="label mb-2">
-                <span class="label-text">Subject</span>
-              </label>
-              <input
-                v-model="form.subject"
-                type="text"
-                placeholder="Message subject"
-                class="input input-bordered w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200"
-              />
-            </div>
+          <div>
+            <label class="term-dim text-sm block mb-1">subject&gt;</label>
+            <input
+              v-model="form.subject"
+              type="text"
+              placeholder="_"
+              class="term-input"
+            />
+          </div>
 
-            <div>
-              <label class="label mb-2">
-                <span class="label-text">Message</span>
-              </label>
-              <textarea
-                v-model="form.message"
-                rows="6"
-                placeholder="Write your message..."
-                class="textarea textarea-bordered w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200"
-                :class="{ 'textarea-error': errors.message }"
-              ></textarea>
-              <p v-if="errors.message" class="text-error text-sm mt-1">{{ errors.message }}</p>
-            </div>
+          <div>
+            <label class="term-dim text-sm block mb-1">message&gt;</label>
+            <textarea
+              v-model="form.message"
+              rows="6"
+              placeholder="_"
+              class="term-textarea"
+              :class="{ 'term-error': errors.message }"
+            ></textarea>
+            <p v-if="errors.message" class="term-error text-xs mt-1">{{ errors.message }}</p>
+          </div>
 
-            <div class="flex items-center justify-between gap-3">
-              <div class="flex items-center gap-3">
-                <input id="consent" type="checkbox" v-model="form.consent" class="checkbox" />
-                <label for="consent" class="text-sm opacity-80">
-                  I consent to my data being used for contact purposes.
-                </label>
-              </div>
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <label class="flex items-start gap-2 text-xs term-dim cursor-pointer">
+              <input id="consent" type="checkbox" v-model="form.consent" class="mt-0.5 accent-[var(--term-fg)]" />
+              <span>I consent to my data being used for contact purposes.</span>
+            </label>
 
-              <div>
-                <button
-                  :disabled="submitting || !isValid"
-                  class="btn btn-primary"
-                  type="submit"
-                >
-                  <span v-if="!submitting">Send</span>
-                  <span v-else class="loading">Sending...</span>
-                </button>
-              </div>
-            </div>
-
-            <div
-              v-if="status.message"
-              :class="status.success ? 'text-success' : 'text-error'"
-              class="text-sm mt-2"
+            <button
+              :disabled="submitting || !isValid"
+              class="term-btn shrink-0"
+              type="submit"
             >
-              {{ status.message }}
-            </div>
+              <span v-if="!submitting">$ send</span>
+              <span v-else>sending<span class="cursor-blink" /></span>
+            </button>
+          </div>
+
+          <div
+            v-if="status.message"
+            :class="status.success ? '' : 'term-error'"
+            class="text-sm mt-1"
+          >
+            <span class="term-dim">{{ status.success ? 'ok:' : 'err:' }}</span> {{ status.message }}
           </div>
         </div>
       </form>
     </div>
   </div>
 </template>
-
-<style scoped>
-.card {
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
-}
-
-.card:hover {
-  transform: translateY(-4px);
-}
-
-.input-error {
-  border-color: #f43f5e;
-}
-
-.textarea-error {
-  border-color: #f43f5e;
-}
-</style>

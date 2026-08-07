@@ -2,7 +2,6 @@
 import ExternalLinkIcon from './icons/ExternalLinkIcon.vue';
 import GitHubIcon from './icons/GitHubIcon.vue';
 
-
 defineProps({
     title: {
         type: String,
@@ -18,7 +17,7 @@ defineProps({
     },
     banner: {
         type: String,
-        default: 'https://via.placeholder.com/400x200.png?text=Project+Banner'
+        default: ''
     },
     link: {
         type: String,
@@ -29,34 +28,53 @@ defineProps({
         default: null
     }
 });
-
 </script>
 
 <template>
-    <div
-        class="card w-90 shadow-sm bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200">
-        <figure>
-            <img :src="banner" />
-        </figure>
-        <div class="card-body">
-            <div class="absolute top-2 right-2 flex gap-2" v-if="link">
-                <a class="badge badge-soft badge-primary btn" :href="link" target="_blank">Link
-                    <ExternalLinkIcon />
-                </a>
-            </div>
-            <h2 class="card-title">
+    <article class="term-card w-full h-full flex flex-col gap-3" :data-title="`./${title}`">
+        <img
+            v-if="banner"
+            :src="banner"
+            :alt="title"
+            class="w-full max-h-40 object-cover border border-[var(--term-border)]"
+        />
+
+        <div class="flex items-start justify-between gap-2">
+            <h2 class="font-semibold text-base sm:text-lg term-bright">
                 {{ title }}
             </h2>
-            <p>{{ description }}</p>
-            <div class="card-actions justify-between items-end mt-5">
-                <a :href="githubLink" target="_blank" class="hover:opacity-70 transition-opacity" v-if="githubLink">
-                    <GitHubIcon width="20" height="20" />
-                </a>
-                <div v-else></div>
-                <div class="flex flex-wrap gap-1 justify-end">
-                    <div class="badge badge-sm badge-outline" v-for="theme in themes">{{ theme }}</div>
-                </div>
+            <a
+                v-if="link"
+                class="term-btn text-xs shrink-0"
+                :href="link"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                link
+                <ExternalLinkIcon />
+            </a>
+        </div>
+
+        <p class="text-sm flex-grow leading-relaxed">
+            {{ description }}
+        </p>
+
+        <div class="flex flex-wrap items-end justify-between gap-3 mt-2 pt-2 border-t border-[var(--term-border)]">
+            <a
+                v-if="githubLink"
+                :href="githubLink"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hover:opacity-70 transition-opacity term-bright"
+                :aria-label="`${title} on GitHub`"
+            >
+                <GitHubIcon width="18" height="18" />
+            </a>
+            <div v-else></div>
+
+            <div class="flex flex-wrap gap-1 justify-end">
+                <span class="term-tag" v-for="theme in themes" :key="String(theme)">[{{ theme }}]</span>
             </div>
         </div>
-    </div>
+    </article>
 </template>
