@@ -58,6 +58,53 @@ export type UserRow = {
   created_at: string
 }
 
+export type PhotographyCategoryRow = {
+  id: number
+  name: string
+  slug: string
+  sort_order: number
+  created_at: string
+}
+
+export type PhotographyImageRow = {
+  id: number
+  category_id: number
+  name: string
+  filename: string
+  size: number
+  camera: string | null
+  iso: number | null
+  obturation: string | null
+  captured_at: string | null
+  sort_order: number
+  created_at: string
+}
+
+export type PhotographyImage = {
+  id: number
+  categoryId: number
+  categoryName: string
+  categorySlug: string
+  name: string
+  size: number
+  path: string
+  camera: string | null
+  iso: number | null
+  obturation: string | null
+  timestamp: string | null
+  sortOrder: number
+  createdAt: string
+}
+
+export type PhotographyCategory = {
+  id: number
+  name: string
+  slug: string
+  sortOrder: number
+  createdAt: string
+  imageCount: number
+}
+
 function hashPassword(password: string): string {
   const salt = randomBytes(16)
   const hash = scryptSync(password, salt, 64)
@@ -252,6 +299,29 @@ export function initDb(projectRoot: string): Database.Database {
       username TEXT NOT NULL UNIQUE COLLATE NOCASE,
       password_hash TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS photography_categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+      slug TEXT NOT NULL UNIQUE COLLATE NOCASE,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS photography_images (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      category_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      filename TEXT NOT NULL UNIQUE,
+      size INTEGER NOT NULL DEFAULT 0,
+      camera TEXT,
+      iso INTEGER,
+      obturation TEXT,
+      captured_at TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (category_id) REFERENCES photography_categories(id) ON DELETE CASCADE
     );
   `)
 
@@ -482,4 +552,233 @@ export function syncPrivateFiles(db: Database.Database, projectRoot: string) {
   })
 
   run(found)
+}
+
+function slugify(input: string): string {
+  return input
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || 'category'
+}
+
+function mapPhotographyCategory(
+  row: PhotographyCategoryRow,
+  imageCount = 0,
+): PhotographyCategory {
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    imageCount,
+  }
+}
+
+function mapPhotographyImage(
+  row: PhotographyImageRow & {
+    category_name?: string
+    category_slug?: string
+  },
+): PhotographyImage {
+  return {
+    id: row.id,
+    categoryId: row.category_id,
+    categoryName: row.category_name || '',
+    categorySlug: row.category_slug || '',
+    name: row.name,
+    size: row.size,
+    path: `/api/photography/images/${row.id}/file`,
+    camera: row.camera,
+    iso: row.iso,
+    obturation: row.obturation,
+    timestamp: row.captured_at,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+  }
+}
+
+export function listPhotographyCategories(db: Database.Database): PhotographyCategory[] {
+  const rows = db.prepare(`
+    SELECT c.*,
+      (SELECT COUNT(*) FROM photography_images i WHERE i.category_id = c.id) AS image_count
+    FROM photography_categories c
+    ORDER BY c.sort_order ASC, c.name COLLATE NOCASE ASC, c.id ASC
+  `).all() as (PhotographyCategoryRow & { image_count: number })[]
+
+  return rows.map((row) => mapPhotographyCategory(row, row.image_count))
+}
+
+export function getPhotographyCategoryById(
+  db: Database.Database,
+  id: number,
+): PhotographyCategoryRow | null {
+  return (db.prepare('SELECT * FROM photography_categories WHERE id = ?').get(id) as PhotographyCategoryRow | undefined) ?? null
+}
+
+export function getPhotographyCategoryBySlug(
+  db: Database.Database,
+  slug: string,
+): PhotographyCategoryRow | null {
+  return (db.prepare('SELECT * FROM photography_categories WHERE slug = ? COLLATE NOCASE').get(slug) as PhotographyCategoryRow | undefined) ?? null
+}
+
+export function createPhotographyCategory(
+  db: Database.Database,
+  name: string,
+  slug?: string,
+): PhotographyCategory {
+  const trimmed = name.trim()
+  let baseSlug = slugify(slug?.trim() || trimmed)
+  let candidate = baseSlug
+  let n = 2
+  while (getPhotographyCategoryBySlug(db, candidate)) {
+    candidate = `${baseSlug}-${n}`
+    n += 1
+  }
+
+  const maxSort = db.prepare('SELECT COALESCE(MAX(sort_order), 0) AS m FROM photography_categories').get() as { m: number }
+  const result = db.prepare(
+    `INSERT INTO photography_categories (name, slug, sort_order) VALUES (?, ?, ?)`,
+  ).run(trimmed, candidate, maxSort.m + 1)
+
+  const row = db.prepare('SELECT * FROM photography_categories WHERE id = ?').get(result.lastInsertRowid) as PhotographyCategoryRow
+  return mapPhotographyCategory(row, 0)
+}
+
+export function deletePhotographyCategory(db: Database.Database, id: number): boolean {
+  const result = db.prepare('DELETE FROM photography_categories WHERE id = ?').run(id)
+  return result.changes > 0
+}
+
+export function listPhotographyImages(
+  db: Database.Database,
+  categorySlug?: string | null,
+): PhotographyImage[] {
+  const sql = categorySlug
+    ? `SELECT i.*, c.name AS category_name, c.slug AS category_slug
+       FROM photography_images i
+       JOIN photography_categories c ON c.id = i.category_id
+       WHERE c.slug = ? COLLATE NOCASE
+       ORDER BY i.sort_order ASC, i.created_at DESC, i.id DESC`
+    : `SELECT i.*, c.name AS category_name, c.slug AS category_slug
+       FROM photography_images i
+       JOIN photography_categories c ON c.id = i.category_id
+       ORDER BY i.sort_order ASC, i.created_at DESC, i.id DESC`
+
+  const rows = (categorySlug
+    ? db.prepare(sql).all(categorySlug)
+    : db.prepare(sql).all()) as (PhotographyImageRow & {
+    category_name: string
+    category_slug: string
+  })[]
+
+  return rows.map(mapPhotographyImage)
+}
+
+export function getPhotographyImageById(
+  db: Database.Database,
+  id: number,
+): (PhotographyImageRow & { category_name: string; category_slug: string }) | null {
+  return (db.prepare(`
+    SELECT i.*, c.name AS category_name, c.slug AS category_slug
+    FROM photography_images i
+    JOIN photography_categories c ON c.id = i.category_id
+    WHERE i.id = ?
+  `).get(id) as (PhotographyImageRow & { category_name: string; category_slug: string }) | undefined) ?? null
+}
+
+export function createPhotographyImage(
+  db: Database.Database,
+  input: {
+    categoryId: number
+    name: string
+    filename: string
+    size: number
+    camera?: string | null
+    iso?: number | null
+    obturation?: string | null
+    capturedAt?: string | null
+  },
+): PhotographyImage {
+  const maxSort = db.prepare(
+    'SELECT COALESCE(MAX(sort_order), 0) AS m FROM photography_images WHERE category_id = ?',
+  ).get(input.categoryId) as { m: number }
+
+  const result = db.prepare(`
+    INSERT INTO photography_images
+      (category_id, name, filename, size, camera, iso, obturation, captured_at, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    input.categoryId,
+    input.name.trim(),
+    input.filename,
+    input.size,
+    input.camera?.trim() || null,
+    input.iso ?? null,
+    input.obturation?.trim() || null,
+    input.capturedAt?.trim() || null,
+    maxSort.m + 1,
+  )
+
+  const row = getPhotographyImageById(db, Number(result.lastInsertRowid))
+  if (!row) throw new Error('Failed to load created photography image')
+  return mapPhotographyImage(row)
+}
+
+export function updatePhotographyImage(
+  db: Database.Database,
+  id: number,
+  input: {
+    categoryId?: number
+    name?: string
+    camera?: string | null
+    iso?: number | null
+    obturation?: string | null
+    capturedAt?: string | null
+  },
+): PhotographyImage | null {
+  const existing = getPhotographyImageById(db, id)
+  if (!existing) return null
+
+  db.prepare(`
+    UPDATE photography_images SET
+      category_id = ?,
+      name = ?,
+      camera = ?,
+      iso = ?,
+      obturation = ?,
+      captured_at = ?
+    WHERE id = ?
+  `).run(
+    input.categoryId ?? existing.category_id,
+    input.name?.trim() ?? existing.name,
+    input.camera !== undefined ? (input.camera?.trim() || null) : existing.camera,
+    input.iso !== undefined ? input.iso : existing.iso,
+    input.obturation !== undefined ? (input.obturation?.trim() || null) : existing.obturation,
+    input.capturedAt !== undefined ? (input.capturedAt?.trim() || null) : existing.captured_at,
+    id,
+  )
+
+  const row = getPhotographyImageById(db, id)
+  return row ? mapPhotographyImage(row) : null
+}
+
+export function listPhotographyImageFilenamesByCategory(
+  db: Database.Database,
+  categoryId: number,
+): string[] {
+  const rows = db.prepare(
+    'SELECT filename FROM photography_images WHERE category_id = ?',
+  ).all(categoryId) as { filename: string }[]
+  return rows.map((r) => r.filename)
+}
+
+export function deletePhotographyImage(db: Database.Database, id: number): PhotographyImageRow | null {
+  const existing = db.prepare('SELECT * FROM photography_images WHERE id = ?').get(id) as PhotographyImageRow | undefined
+  if (!existing) return null
+  db.prepare('DELETE FROM photography_images WHERE id = ?').run(id)
+  return existing
 }

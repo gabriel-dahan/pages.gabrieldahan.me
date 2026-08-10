@@ -2,6 +2,7 @@ import express from 'express'
 import nodemailer from 'nodemailer'
 import path from 'path'
 import fs from 'fs'
+import multer from 'multer'
 import { fileURLToPath } from 'url'
 import { v4 as uuidv4 } from 'uuid'
 import dotenv from 'dotenv'
@@ -17,6 +18,16 @@ import {
   listPrivateFilesForUser,
   updatePrivateFileMeta,
   authenticateUser,
+  listPhotographyCategories,
+  createPhotographyCategory,
+  deletePhotographyCategory,
+  getPhotographyCategoryById,
+  listPhotographyImages,
+  getPhotographyImageById,
+  createPhotographyImage,
+  updatePhotographyImage,
+  deletePhotographyImage,
+  listPhotographyImageFilenamesByCategory,
 } from './db.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -64,9 +75,41 @@ if (!DEBUG) {
 
 app.use((_, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, PATCH, OPTIONS')
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, PATCH, DELETE, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   next()
+})
+
+const photographyDir = path.join(projectRoot, 'data', 'photography')
+if (!fs.existsSync(photographyDir)) {
+  fs.mkdirSync(photographyDir, { recursive: true })
+}
+
+const ALLOWED_IMAGE_MIME = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/heic',
+  'image/heif',
+])
+
+const photographyUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, photographyDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase().replace(/[^.a-z0-9]/g, '') || '.jpg'
+      cb(null, `${uuidv4()}${ext}`)
+    },
+  }),
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_IMAGE_MIME.has(file.mimetype)) {
+      cb(null, true)
+    } else {
+      cb(new Error('Only image uploads are allowed'))
+    }
+  },
 })
 
 app.options(/.*/, (_req, res) => {
@@ -369,6 +412,219 @@ app.get('/api/private/file', requireAuth, (req, res) => {
 })
 
 // --- End Private Directory Endpoints ---
+
+// --- Photography ---
+
+app.get('/api/photography/categories', (_req, res) => {
+  try {
+    res.json({ categories: listPhotographyCategories(db) })
+  } catch (err) {
+    console.error('Photography categories error:', err)
+    res.status(500).json({ error: 'Failed to load categories' })
+  }
+})
+
+app.post('/api/photography/categories', requireAuth, (req, res) => {
+  try {
+    const name = typeof req.body.name === 'string' ? req.body.name.trim() : ''
+    const slug = typeof req.body.slug === 'string' ? req.body.slug.trim() : undefined
+    if (!name) return res.status(400).json({ error: 'Category name is required' })
+    if (name.length > 64) return res.status(400).json({ error: 'Name must be 64 characters or fewer' })
+
+    const category = createPhotographyCategory(db, name, slug)
+    res.status(201).json({ success: true, category })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to create category'
+    if (String(message).includes('UNIQUE')) {
+      return res.status(409).json({ error: 'A category with that name already exists' })
+    }
+    console.error('Create photography category error:', err)
+    res.status(500).json({ error: 'Failed to create category' })
+  }
+})
+
+app.delete('/api/photography/categories/:id', requireAuth, (req, res) => {
+  try {
+    const id = Number(req.params.id)
+    if (!Number.isInteger(id) || id < 1) {
+      return res.status(400).json({ error: 'Invalid category id' })
+    }
+
+    const category = getPhotographyCategoryById(db, id)
+    if (!category) return res.status(404).json({ error: 'Category not found' })
+
+    const imageRows = listPhotographyImageFilenamesByCategory(db, id)
+
+    const deleted = deletePhotographyCategory(db, id)
+    if (!deleted) return res.status(404).json({ error: 'Category not found' })
+
+    for (const filename of imageRows) {
+      const filePath = path.join(photographyDir, filename)
+      if (filePath.startsWith(photographyDir) && fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath)
+      }
+    }
+
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Delete photography category error:', err)
+    res.status(500).json({ error: 'Failed to delete category' })
+  }
+})
+
+app.get('/api/photography/images', (req, res) => {
+  try {
+    const category = typeof req.query.category === 'string' ? req.query.category : null
+    res.json({ images: listPhotographyImages(db, category) })
+  } catch (err) {
+    console.error('Photography images error:', err)
+    res.status(500).json({ error: 'Failed to load images' })
+  }
+})
+
+app.get('/api/photography/images/:id/file', (req, res) => {
+  try {
+    const id = Number(req.params.id)
+    if (!Number.isInteger(id) || id < 1) {
+      return res.status(400).json({ error: 'Invalid image id' })
+    }
+    const image = getPhotographyImageById(db, id)
+    if (!image) return res.status(404).json({ error: 'Image not found' })
+
+    const filePath = path.join(photographyDir, image.filename)
+    if (!filePath.startsWith(photographyDir) || !fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'File not found' })
+    }
+    res.sendFile(filePath)
+  } catch (err) {
+    console.error('Photography file error:', err)
+    res.status(500).json({ error: 'Failed to send image' })
+  }
+})
+
+app.post('/api/photography/images', requireAuth, (req, res) => {
+  photographyUpload.single('image')(req, res, (uploadErr) => {
+    if (uploadErr) {
+      const message = uploadErr instanceof Error ? uploadErr.message : 'Upload failed'
+      return res.status(400).json({ error: message })
+    }
+
+    try {
+      const file = req.file
+      if (!file) return res.status(400).json({ error: 'Image file is required' })
+
+      const categoryId = Number(req.body.categoryId)
+      if (!Number.isInteger(categoryId) || categoryId < 1) {
+        fs.unlinkSync(file.path)
+        return res.status(400).json({ error: 'Valid categoryId is required' })
+      }
+
+      const category = getPhotographyCategoryById(db, categoryId)
+      if (!category) {
+        fs.unlinkSync(file.path)
+        return res.status(404).json({ error: 'Category not found' })
+      }
+
+      const name = typeof req.body.name === 'string' && req.body.name.trim()
+        ? req.body.name.trim()
+        : path.parse(file.originalname).name
+
+      const camera = typeof req.body.camera === 'string' ? req.body.camera : null
+      const obturation = typeof req.body.obturation === 'string' ? req.body.obturation : null
+      const capturedAt = typeof req.body.timestamp === 'string' ? req.body.timestamp : null
+      const isoRaw = typeof req.body.iso === 'string' ? req.body.iso.trim() : ''
+      const iso = isoRaw ? Number(isoRaw) : null
+      if (iso !== null && (!Number.isFinite(iso) || iso < 0)) {
+        fs.unlinkSync(file.path)
+        return res.status(400).json({ error: 'Invalid ISO value' })
+      }
+
+      const image = createPhotographyImage(db, {
+        categoryId,
+        name: name.slice(0, 120),
+        filename: file.filename,
+        size: file.size,
+        camera,
+        iso,
+        obturation,
+        capturedAt,
+      })
+
+      res.status(201).json({ success: true, image })
+    } catch (err) {
+      if (req.file?.path && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path)
+      }
+      console.error('Create photography image error:', err)
+      res.status(500).json({ error: 'Failed to save image' })
+    }
+  })
+})
+
+app.patch('/api/photography/images/:id', requireAuth, (req, res) => {
+  try {
+    const id = Number(req.params.id)
+    if (!Number.isInteger(id) || id < 1) {
+      return res.status(400).json({ error: 'Invalid image id' })
+    }
+
+    const categoryId = req.body.categoryId !== undefined ? Number(req.body.categoryId) : undefined
+    if (categoryId !== undefined) {
+      if (!Number.isInteger(categoryId) || categoryId < 1) {
+        return res.status(400).json({ error: 'Invalid categoryId' })
+      }
+      if (!getPhotographyCategoryById(db, categoryId)) {
+        return res.status(404).json({ error: 'Category not found' })
+      }
+    }
+
+    const iso = req.body.iso !== undefined
+      ? (req.body.iso === null || req.body.iso === '' ? null : Number(req.body.iso))
+      : undefined
+    if (iso !== undefined && iso !== null && (!Number.isFinite(iso) || iso < 0)) {
+      return res.status(400).json({ error: 'Invalid ISO value' })
+    }
+
+    const image = updatePhotographyImage(db, id, {
+      categoryId,
+      name: typeof req.body.name === 'string' ? req.body.name : undefined,
+      camera: req.body.camera !== undefined ? String(req.body.camera || '') : undefined,
+      iso,
+      obturation: req.body.obturation !== undefined ? String(req.body.obturation || '') : undefined,
+      capturedAt: req.body.timestamp !== undefined ? String(req.body.timestamp || '') : undefined,
+    })
+
+    if (!image) return res.status(404).json({ error: 'Image not found' })
+    res.json({ success: true, image })
+  } catch (err) {
+    console.error('Update photography image error:', err)
+    res.status(500).json({ error: 'Failed to update image' })
+  }
+})
+
+app.delete('/api/photography/images/:id', requireAuth, (req, res) => {
+  try {
+    const id = Number(req.params.id)
+    if (!Number.isInteger(id) || id < 1) {
+      return res.status(400).json({ error: 'Invalid image id' })
+    }
+
+    const deleted = deletePhotographyImage(db, id)
+    if (!deleted) return res.status(404).json({ error: 'Image not found' })
+
+    const filePath = path.join(photographyDir, deleted.filename)
+    if (filePath.startsWith(photographyDir) && fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath)
+    }
+
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Delete photography image error:', err)
+    res.status(500).json({ error: 'Failed to delete image' })
+  }
+})
+
+// --- End Photography ---
 
 if (!DEBUG) {
   app.get(/.*/, (req, res) => {

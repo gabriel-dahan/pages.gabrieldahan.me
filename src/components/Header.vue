@@ -25,6 +25,9 @@ const closeMenu = () => {
                             <RouterLink to="/projects" class="term-link font-mono" @click="closeMenu">./projects</RouterLink>
                         </li>
                         <li>
+                            <RouterLink to="/photography" class="term-link font-mono" @click="closeMenu">./photography</RouterLink>
+                        </li>
+                        <li>
                             <RouterLink to="/contact" class="term-link font-mono" @click="closeMenu">./contact</RouterLink>
                         </li>
                         <li>
@@ -43,6 +46,7 @@ const closeMenu = () => {
 
             <nav class="hidden lg:flex items-center gap-5 text-[var(--term-fg)]">
                 <RouterLink to="/projects" class="term-link">./projects</RouterLink>
+                <RouterLink to="/photography" class="term-link">./photography</RouterLink>
                 <RouterLink to="/contact" class="term-link">./contact</RouterLink>
                 <RouterLink to="/resume" class="term-link">./resume</RouterLink>
             </nav>

@@ -35,3 +35,6 @@ private_files/
 # App SQLite DB
 data/*.sqlite
 data/*.sqlite-*
+
+# Uploaded photography originals
+data/photography/
