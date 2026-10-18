@@ -14,6 +14,7 @@ export type ProjectRow = {
   category: 'personal' | 'academic'
   sort_order: number
   featured: number
+  hackathon: number
 }
 
 export type Project = {
@@ -27,6 +28,7 @@ export type Project = {
   category: 'personal' | 'academic'
   sortOrder: number
   featured: boolean
+  hackathon: boolean
 }
 
 export type PrivateFileRow = {
@@ -135,17 +137,19 @@ const SEED_PROJECTS: Omit<ProjectRow, 'id'>[] = [
     category: 'personal',
     sort_order: 1,
     featured: 1,
+    hackathon: 0,
   },
   {
     title: 'BloomScape',
     banner: '',
     description: '[UNDER DEV] BloomScape is a web-based, persistent multiplayer game. It features a complex closed economy where players trade flowers and use sap as a virtual currency.',
-    themes: JSON.stringify(['NextJS', 'TypeScript', 'three.js']),
+    themes: JSON.stringify(['VueJS', 'TypeScript', 'three.js']),
     link: '',
     github_link: 'https://github.com/gabriel-dahan/bloomscape',
     category: 'personal',
     sort_order: 2,
     featured: 1,
+    hackathon: 0,
   },
   {
     title: 'COMX',
@@ -157,6 +161,7 @@ const SEED_PROJECTS: Omit<ProjectRow, 'id'>[] = [
     category: 'personal',
     sort_order: 3,
     featured: 1,
+    hackathon: 0,
   },
   {
     title: 'VaderMap',
@@ -168,6 +173,7 @@ const SEED_PROJECTS: Omit<ProjectRow, 'id'>[] = [
     category: 'personal',
     sort_order: 4,
     featured: 1,
+    hackathon: 0,
   },
   {
     title: 'Pages',
@@ -179,6 +185,19 @@ const SEED_PROJECTS: Omit<ProjectRow, 'id'>[] = [
     category: 'personal',
     sort_order: 5,
     featured: 0,
+    hackathon: 0,
+  },
+  {
+    title: 'Jefe',
+    banner: '',
+    description: 'Jefe is a cooking app for learning recipes together — cook as a team in the same kitchen, with tasks split so everyone can work independently.',
+    themes: JSON.stringify(['Cooking', 'Collaboration']),
+    link: '',
+    github_link: null,
+    category: 'personal',
+    sort_order: 6,
+    featured: 0,
+    hackathon: 1,
   },
   {
     title: 'SPORTIX',
@@ -190,6 +209,7 @@ const SEED_PROJECTS: Omit<ProjectRow, 'id'>[] = [
     category: 'academic',
     sort_order: 1,
     featured: 0,
+    hackathon: 0,
   },
   {
     title: 'Economics Project at ENSAI',
@@ -201,6 +221,7 @@ const SEED_PROJECTS: Omit<ProjectRow, 'id'>[] = [
     category: 'academic',
     sort_order: 2,
     featured: 0,
+    hackathon: 0,
   },
   {
     title: 'Statistics Project at ENSAI',
@@ -212,6 +233,7 @@ const SEED_PROJECTS: Omit<ProjectRow, 'id'>[] = [
     category: 'academic',
     sort_order: 3,
     featured: 0,
+    hackathon: 0,
   },
   {
     title: 'TIPE',
@@ -223,8 +245,22 @@ const SEED_PROJECTS: Omit<ProjectRow, 'id'>[] = [
     category: 'academic',
     sort_order: 4,
     featured: 0,
+    hackathon: 0,
   },
 ]
+
+const JEFE_PROJECT: Omit<ProjectRow, 'id'> = {
+  title: 'Jefe',
+  banner: '',
+  description: 'Jefe is a cooking app for learning recipes together — cook as a team in the same kitchen, with tasks split so everyone can work independently.',
+  themes: JSON.stringify(['Cooking', 'Collaboration']),
+  link: '',
+  github_link: null,
+  category: 'personal',
+  sort_order: 6,
+  featured: 0,
+  hackathon: 1,
+}
 
 function mapProject(row: ProjectRow): Project {
   let themes: string[] = []
@@ -244,6 +280,41 @@ function mapProject(row: ProjectRow): Project {
     category: row.category,
     sortOrder: row.sort_order,
     featured: Boolean(row.featured),
+    hackathon: Boolean(row.hackathon),
+  }
+}
+
+function ensureProjectsHackathonColumn(db: Database.Database) {
+  const cols = db.prepare(`PRAGMA table_info(projects)`).all() as { name: string }[]
+  if (!cols.some((c) => c.name === 'hackathon')) {
+    db.exec(`ALTER TABLE projects ADD COLUMN hackathon INTEGER NOT NULL DEFAULT 0`)
+  }
+}
+
+function upsertJefeProject(db: Database.Database) {
+  const existing = db.prepare(
+    `SELECT id FROM projects WHERE title = ? COLLATE NOCASE`,
+  ).get(JEFE_PROJECT.title) as { id: number } | undefined
+
+  if (existing) {
+    db.prepare(`
+      UPDATE projects SET
+        banner = @banner,
+        description = @description,
+        themes = @themes,
+        link = @link,
+        github_link = @github_link,
+        category = @category,
+        sort_order = @sort_order,
+        featured = @featured,
+        hackathon = @hackathon
+      WHERE id = @id
+    `).run({ ...JEFE_PROJECT, id: existing.id })
+  } else {
+    db.prepare(`
+      INSERT INTO projects (title, banner, description, themes, link, github_link, category, sort_order, featured, hackathon)
+      VALUES (@title, @banner, @description, @themes, @link, @github_link, @category, @sort_order, @featured, @hackathon)
+    `).run(JEFE_PROJECT)
   }
 }
 
@@ -269,7 +340,8 @@ export function initDb(projectRoot: string): Database.Database {
       github_link TEXT,
       category TEXT NOT NULL CHECK(category IN ('personal', 'academic')),
       sort_order INTEGER NOT NULL DEFAULT 0,
-      featured INTEGER NOT NULL DEFAULT 0
+      featured INTEGER NOT NULL DEFAULT 0,
+      hackathon INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS private_files (
@@ -325,17 +397,25 @@ export function initDb(projectRoot: string): Database.Database {
     );
   `)
 
+  ensureProjectsHackathonColumn(db)
+
   const count = db.prepare('SELECT COUNT(*) AS c FROM projects').get() as { c: number }
   if (count.c === 0) {
     const insert = db.prepare(`
-      INSERT INTO projects (title, banner, description, themes, link, github_link, category, sort_order, featured)
-      VALUES (@title, @banner, @description, @themes, @link, @github_link, @category, @sort_order, @featured)
+      INSERT INTO projects (title, banner, description, themes, link, github_link, category, sort_order, featured, hackathon)
+      VALUES (@title, @banner, @description, @themes, @link, @github_link, @category, @sort_order, @featured, @hackathon)
     `)
     const seed = db.transaction((rows: Omit<ProjectRow, 'id'>[]) => {
       for (const row of rows) insert.run(row)
     })
     seed(SEED_PROJECTS)
   }
+
+  upsertJefeProject(db)
+
+  db.prepare(
+    `UPDATE projects SET themes = ? WHERE title = ? COLLATE NOCASE`,
+  ).run(JSON.stringify(['VueJS', 'TypeScript', 'three.js']), 'BloomScape')
 
   const existingGab = db.prepare('SELECT id FROM users WHERE username = ? COLLATE NOCASE').get('gab')
   if (!existingGab) {
@@ -367,9 +447,11 @@ export function authenticateUser(
 export function listProjects(db: Database.Database, featuredOnly = false): Project[] {
   const sql = featuredOnly
     ? `SELECT * FROM projects WHERE featured = 1
-       ORDER BY CASE category WHEN 'personal' THEN 0 ELSE 1 END, sort_order ASC, id ASC`
+       ORDER BY CASE WHEN hackathon = 1 THEN 1 WHEN category = 'personal' THEN 0 ELSE 2 END,
+                sort_order ASC, id ASC`
     : `SELECT * FROM projects
-       ORDER BY CASE category WHEN 'personal' THEN 0 ELSE 1 END, sort_order ASC, id ASC`
+       ORDER BY CASE WHEN hackathon = 1 THEN 1 WHEN category = 'personal' THEN 0 ELSE 2 END,
+                sort_order ASC, id ASC`
   const rows = db.prepare(sql).all() as ProjectRow[]
   return rows.map(mapProject)
 }

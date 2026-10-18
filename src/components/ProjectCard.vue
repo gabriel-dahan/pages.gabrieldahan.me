@@ -26,6 +26,10 @@ defineProps({
     githubLink: {
         type: String,
         default: null
+    },
+    hackathon: {
+        type: Boolean,
+        default: false
     }
 });
 </script>
@@ -40,9 +44,12 @@ defineProps({
         />
 
         <div class="flex items-start justify-between gap-2">
-            <h2 class="font-semibold text-base sm:text-lg term-bright">
-                {{ title }}
-            </h2>
+            <div class="min-w-0 flex flex-wrap items-center gap-2">
+                <h2 class="font-semibold text-base sm:text-lg term-bright">
+                    {{ title }}
+                </h2>
+                <span v-if="hackathon" class="term-tag shrink-0">[hackathon]</span>
+            </div>
             <a
                 v-if="link"
                 class="term-btn text-xs shrink-0"

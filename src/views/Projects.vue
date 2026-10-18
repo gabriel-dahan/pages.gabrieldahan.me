@@ -11,13 +11,17 @@ interface Project {
   link: string
   githubLink?: string | null
   category: 'personal' | 'academic'
+  hackathon: boolean
 }
 
 const projects = ref<Project[]>([])
 const loading = ref(true)
 const error = ref('')
 
-const personal = computed(() => projects.value.filter((p) => p.category === 'personal'))
+const personal = computed(() =>
+  projects.value.filter((p) => p.category === 'personal' && !p.hackathon),
+)
+const hackathon = computed(() => projects.value.filter((p) => p.hackathon))
 const academic = computed(() => projects.value.filter((p) => p.category === 'academic'))
 
 onMounted(async () => {
@@ -57,6 +61,26 @@ onMounted(async () => {
           :description="proj.description"
           :link="proj.link"
           :githubLink="proj.githubLink || undefined"
+        />
+      </div>
+
+      <div class="term-dim text-sm my-2" aria-hidden="true">{{ '─'.repeat(40) }}</div>
+
+      <h1 class="app__subtitle">
+        <span class="term-dim">$</span> ls ./hackathons
+      </h1>
+      <p v-if="hackathon.length === 0" class="term-dim text-sm"># no hackathon projects</p>
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 w-full">
+        <ProjectCard
+          v-for="proj in hackathon"
+          :key="proj.id"
+          :banner="proj.banner"
+          :title="proj.title"
+          :themes="proj.themes"
+          :description="proj.description"
+          :link="proj.link"
+          :githubLink="proj.githubLink || undefined"
+          :hackathon="true"
         />
       </div>
 

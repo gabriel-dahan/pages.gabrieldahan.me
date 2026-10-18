@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import Typewriter from '../components/Typewriter.vue'
 import ClockCard from '../components/home/ClockCard.vue'
+import HackathonsCard from '../components/home/HackathonsCard.vue'
 import ProjectsPreviewCard from '../components/home/ProjectsPreviewCard.vue'
 import ApiToysCard from '../components/home/ApiToysCard.vue'
 import CommentsSection from '../components/home/CommentsSection.vue'
@@ -50,10 +51,10 @@ const aboutDone = () => step.value >= lines.length + 2
         <button
           v-if="!aboutDone()"
           type="button"
-          class="term-btn text-xs shrink-0 mt-1"
+          class="term-btn-skip shrink-0 mt-1"
           @click="skip"
         >
-          skip
+          skip intro
         </button>
       </div>
     </header>
@@ -101,7 +102,10 @@ const aboutDone = () => step.value >= lines.length + 2
       class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 w-full pt-2 term-fade-in"
     >
       <ProjectsPreviewCard />
-      <ClockCard />
+      <div class="flex flex-col gap-5 h-full">
+        <ClockCard />
+        <HackathonsCard />
+      </div>
       <ApiToysCard />
     </section>
 

@@ -206,6 +206,28 @@ strong {
   color: var(--term-fg-bright);
 }
 
+.term-btn-skip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--term-fg-bright);
+  background: color-mix(in srgb, var(--term-fg) 22%, var(--term-bg-elevated));
+  color: var(--term-fg-bright);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.term-btn-skip:hover {
+  background: color-mix(in srgb, var(--term-fg) 34%, var(--term-bg-elevated));
+  border-color: var(--term-fg-bright);
+  color: var(--term-bg);
+}
+
 .term-input,
 .term-textarea {
   width: 100%;
