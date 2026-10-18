@@ -28,8 +28,9 @@ In [pages.gabrieldahan.me → Settings → Secrets and variables → Actions](ht
 | `SSH_HOST` | VPS hostname or IP |
 | `SSH_USER` | SSH user (e.g. `dev`) |
 | `SSH_PRIVATE_KEY` | Private key for that user (public key must be in `~/.ssh/authorized_keys` on the VPS) |
+| `SSH_PASSPHRASE` | Passphrase for that private key (only if the key is encrypted) |
 
-Use a dedicated deploy key if you prefer not to reuse your personal SSH key.
+Prefer a **dedicated deploy key without a passphrase** for Actions, so you don’t store your personal key passphrase in GitHub.
 
 ### One-time: VPS setup
 

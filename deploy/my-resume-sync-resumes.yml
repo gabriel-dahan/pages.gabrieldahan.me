@@ -3,6 +3,7 @@
 #
 # Required GitHub secrets (same as pages.gabrieldahan.me):
 #   SSH_HOST, SSH_USER, SSH_PRIVATE_KEY
+#   SSH_PASSPHRASE (only if the private key is encrypted)
 
 name: Sync resumes to VPS
 
@@ -31,6 +32,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           source: 'en/resume_en.pdf,fr/resume_fr.pdf'
           target: '/tmp/resume-sync'
           strip_components: 0
@@ -41,6 +43,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             set -euo pipefail
             APP=/var/www/gabrieldahan.me/pages
