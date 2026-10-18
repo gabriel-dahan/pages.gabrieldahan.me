@@ -11,7 +11,6 @@ lerna-debug.log*
 .env.server
 
 node_modules
-package-lock.json
 dist
 dist-server
 *.local

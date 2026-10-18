@@ -70,7 +70,7 @@ const requireAuth = (req: express.Request, res: express.Response, next: express.
 }
 
 if (!DEBUG) {
-  app.use(express.static(path.join(projectRoot, 'static_app')))
+  app.use(express.static(path.join(projectRoot, 'dist')))
 }
 
 app.use((_, res, next) => {
@@ -631,7 +631,7 @@ if (!DEBUG) {
     if (req.path.startsWith('/api')) {
       return res.status(404).json({ error: 'API route not found' })
     }
-    res.sendFile(path.join(projectRoot, 'static_app', 'index.html'), (err) => {
+    res.sendFile(path.join(projectRoot, 'dist', 'index.html'), (err) => {
       if (err) {
         console.error('Failed to send index.html. Is the frontend built?', err)
         res.status(404).send('Frontend not built. Please run npm run build first.')

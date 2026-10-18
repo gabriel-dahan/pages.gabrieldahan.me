@@ -1,0 +1,54 @@
+# Copy this file to the my-resume repo as:
+#   .github/workflows/sync-resumes.yml
+#
+# Required GitHub secrets (same as pages.gabrieldahan.me):
+#   SSH_HOST, SSH_USER, SSH_PRIVATE_KEY
+
+name: Sync resumes to VPS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'en/**'
+      - 'fr/**'
+  workflow_dispatch:
+
+concurrency:
+  group: sync-resumes-vps
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload resumes to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: 'en/resume_en.pdf,fr/resume_fr.pdf'
+          target: '/tmp/resume-sync'
+          strip_components: 0
+
+      - name: Place resumes into pages public + dist
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            APP=/var/www/gabrieldahan.me/pages
+            mkdir -p "$APP/public/files" "$APP/dist/files"
+            cp /tmp/resume-sync/en/resume_en.pdf "$APP/public/files/resume_en.pdf"
+            cp /tmp/resume-sync/fr/resume_fr.pdf "$APP/public/files/resume_fr.pdf"
+            cp /tmp/resume-sync/en/resume_en.pdf "$APP/dist/files/resume_en.pdf"
+            cp /tmp/resume-sync/fr/resume_fr.pdf "$APP/dist/files/resume_fr.pdf"
+            rm -rf /tmp/resume-sync
+            echo "Resumes synced."
