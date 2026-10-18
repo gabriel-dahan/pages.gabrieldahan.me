@@ -10,7 +10,7 @@
     "dev-server": "tsx src/server.ts",
     "build:server": "tsc -p tsconfig.server.json",
     "start": "node dist-server/server.js",
-    "deploy": "gh workflow run deploy.yml"
+    "deploy": "gh auth status -h github.com >/dev/null 2>&1 && gh workflow run deploy.yml && echo 'Deploy workflow queued. Watch it: gh run watch' || (echo 'gh is not authenticated. Run: gh auth login' && exit 1)"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
