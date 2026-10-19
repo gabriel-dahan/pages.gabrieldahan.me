@@ -311,28 +311,9 @@ function weatherGlyph(code: number): string {
   return 'WX'
 }
 
-async function resolveCoords(
+async function resolveCoordsFromIp(
   req: express.Request,
 ): Promise<{ lat: number; lon: number; place: string; source: string }> {
-  const latQ = Number(req.query.lat)
-  const lonQ = Number(req.query.lon)
-  if (Number.isFinite(latQ) && Number.isFinite(lonQ) && Math.abs(latQ) <= 90 && Math.abs(lonQ) <= 180) {
-    let place = `${latQ.toFixed(2)}, ${lonQ.toFixed(2)}`
-    try {
-      const geo = await fetch(
-        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latQ}&longitude=${lonQ}&localityLanguage=en`,
-      )
-      if (geo.ok) {
-        const g = (await geo.json()) as { city?: string; locality?: string; countryName?: string }
-        const city = g.city || g.locality
-        if (city) place = g.countryName ? `${city}, ${g.countryName}` : city
-      }
-    } catch {
-      /* keep lat/lon label */
-    }
-    return { lat: latQ, lon: lonQ, place, source: 'geolocation' }
-  }
-
   const forwarded = req.headers['x-forwarded-for']
   const ipRaw = typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : req.socket.remoteAddress || ''
   const ip = ipRaw.replace(/^::ffff:/, '')
@@ -357,13 +338,13 @@ async function resolveCoords(
     }
   }
 
-  // ENSAI / Rennes fallback
+  // ENSAI / Rennes fallback (local / private IP)
   return { lat: 48.1173, lon: -1.6778, place: 'Rennes, France', source: 'default' }
 }
 
 app.get('/api/toys/weather', async (req, res) => {
   try {
-    const { lat, lon, place, source } = await resolveCoords(req)
+    const { lat, lon, place, source } = await resolveCoordsFromIp(req)
     const url =
       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
       `&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,apparent_temperature` +
@@ -435,39 +416,66 @@ app.get('/api/toys/iss', async (_req, res) => {
 
 app.get('/api/toys/markets', async (_req, res) => {
   try {
-    const [priceRes, chartRes] = await Promise.all([
-      fetch(
-        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true',
-      ),
-      fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1'),
-    ])
-    if (!priceRes.ok) throw new Error('upstream price')
-    const prices = (await priceRes.json()) as Record<
-      string,
-      { usd?: number; usd_24h_change?: number }
-    >
-    let sparkline: number[] = []
-    if (chartRes.ok) {
-      const chart = (await chartRes.json()) as { prices?: [number, number][] }
-      const pts = chart.prices || []
-      const step = Math.max(1, Math.floor(pts.length / 32))
-      sparkline = pts.filter((_, i) => i % step === 0).map((p) => p[1])
+    // URTH = iShares MSCI World ETF (liquid proxy for MSCI World)
+    const r = await fetch(
+      'https://query1.finance.yahoo.com/v8/finance/chart/URTH?interval=1d&range=3mo',
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0',
+          Accept: 'application/json',
+        },
+      },
+    )
+    if (!r.ok) throw new Error(`upstream ${r.status}`)
+    const payload = (await r.json()) as {
+      chart?: {
+        result?: Array<{
+          meta?: {
+            regularMarketPrice?: number
+            chartPreviousClose?: number
+            regularMarketChangePercent?: number
+            currency?: string
+          }
+          indicators?: { quote?: Array<{ close?: Array<number | null> }> }
+        }>
+        error?: unknown
+      }
     }
+    const result = payload.chart?.result?.[0]
+    if (!result) throw new Error('no result')
+
+    const closes = (result.indicators?.quote?.[0]?.close || []).filter(
+      (v): v is number => typeof v === 'number' && Number.isFinite(v),
+    )
+    if (closes.length < 2) throw new Error('no closes')
+
+    const price = result.meta?.regularMarketPrice ?? closes[closes.length - 1]
+    const prevClose = result.meta?.chartPreviousClose ?? closes[closes.length - 2]
+    const change1d =
+      typeof result.meta?.regularMarketChangePercent === 'number'
+        ? result.meta.regularMarketChangePercent
+        : prevClose !== 0
+          ? ((price - prevClose) / prevClose) * 100
+          : null
+    const first = closes[0]
+    const changePeriod = first !== 0 ? ((price - first) / first) * 100 : null
+    const step = Math.max(1, Math.floor(closes.length / 36))
+    const sparkline = closes.filter((_, i) => i % step === 0)
+
     res.json({
-      bitcoin: {
-        price: prices.bitcoin?.usd ?? null,
-        change24h: prices.bitcoin?.usd_24h_change ?? null,
-      },
-      ethereum: {
-        price: prices.ethereum?.usd ?? null,
-        change24h: prices.ethereum?.usd_24h_change ?? null,
-      },
+      symbol: 'URTH',
+      name: 'MSCI World',
+      price,
+      change1d,
+      changePeriod,
+      periodLabel: '3m',
+      currency: result.meta?.currency || 'USD',
       sparkline,
-      meta: 'coingecko.com',
+      meta: 'yahoo · URTH',
     })
   } catch (err) {
     console.error('Markets toy error:', err)
-    res.status(502).json({ error: 'Failed to fetch markets' })
+    res.status(502).json({ error: 'Failed to fetch MSCI World data' })
   }
 })
 

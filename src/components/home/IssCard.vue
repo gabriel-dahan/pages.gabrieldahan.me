@@ -15,16 +15,12 @@ const error = ref('')
 const data = ref<IssData | null>(null)
 let timer: ReturnType<typeof setInterval> | null = null
 
-const mapX = computed(() => {
-  const lon = data.value?.longitude
-  if (lon == null) return 50
-  return ((lon + 180) / 360) * 100
-})
-
-const mapY = computed(() => {
+/** Equirectangular: viewBox 0 0 360 180 → x = lon+180, y = 90-lat */
+const marker = computed(() => {
   const lat = data.value?.latitude
-  if (lat == null) return 50
-  return ((90 - lat) / 180) * 100
+  const lon = data.value?.longitude
+  if (lat == null || lon == null) return null
+  return { x: lon + 180, y: 90 - lat }
 })
 
 async function load(silent = false) {
@@ -63,15 +59,60 @@ onUnmounted(() => {
     </div>
     <p v-else-if="error && !data" class="term-error text-sm flex-grow">err: {{ error }}</p>
     <template v-else-if="data">
-      <div
-        class="iss-map relative w-full aspect-[2/1] border border-[var(--term-border)] bg-[var(--term-bg)] mb-3 overflow-hidden"
-        aria-hidden="true"
-      >
-        <div class="iss-map__grid" />
-        <div
-          class="iss-map__dot"
-          :style="{ left: `${mapX}%`, top: `${mapY}%` }"
-        />
+      <div class="iss-map border border-[var(--term-border)] bg-[var(--term-bg)] mb-3 overflow-hidden">
+        <svg
+          class="iss-map__svg block w-full h-auto"
+          viewBox="0 0 360 180"
+          preserveAspectRatio="xMidYMid meet"
+          role="img"
+          :aria-label="`ISS at ${data.latitude?.toFixed(1)}°, ${data.longitude?.toFixed(1)}°`"
+        >
+          <!-- lat/lon grid -->
+          <g class="iss-map__grid" aria-hidden="true">
+            <line v-for="x in [0, 60, 120, 180, 240, 300, 360]" :key="'v'+x" :x1="x" y1="0" :x2="x" y2="180" />
+            <line v-for="y in [0, 45, 90, 135, 180]" :key="'h'+y" x1="0" :y1="y" x2="360" :y2="y" />
+          </g>
+
+          <!-- Simplified landmasses in lon/lat space (x=lon+180, y=90-lat) -->
+          <g class="iss-map__land" aria-hidden="true">
+            <!-- North America -->
+            <path d="M28 42 L48 28 L78 26 L95 34 L108 48 L102 62 L88 72 L70 78 L52 74 L38 66 L30 54 Z" />
+            <!-- Greenland -->
+            <path d="M118 18 L132 14 L140 24 L134 38 L120 36 L114 26 Z" />
+            <!-- South America -->
+            <path d="M98 88 L112 84 L122 96 L126 118 L118 142 L108 148 L100 132 L96 108 Z" />
+            <!-- Europe -->
+            <path d="M168 38 L188 34 L198 40 L196 52 L182 56 L170 50 Z" />
+            <!-- Africa -->
+            <path d="M168 62 L198 58 L212 72 L216 98 L204 128 L186 132 L172 112 L166 84 Z" />
+            <!-- Asia -->
+            <path d="M200 28 L248 22 L292 30 L310 48 L298 68 L268 74 L232 70 L208 56 L198 42 Z" />
+            <!-- India -->
+            <path d="M248 72 L262 70 L268 88 L256 98 L246 86 Z" />
+            <!-- SE Asia / Indonesia -->
+            <path d="M278 88 L302 86 L318 96 L308 108 L286 104 Z" />
+            <!-- Australia -->
+            <path d="M288 118 L318 112 L338 124 L332 142 L304 146 L286 134 Z" />
+            <!-- Antarctica fringe -->
+            <path d="M20 168 L100 162 L200 166 L300 160 L350 168 L350 178 L10 178 Z" />
+          </g>
+
+          <g v-if="marker">
+            <circle
+              class="iss-map__pulse"
+              :cx="marker.x"
+              :cy="marker.y"
+              r="7"
+            />
+            <rect
+              class="iss-map__dot"
+              :x="marker.x - 2.5"
+              :y="marker.y - 2.5"
+              width="5"
+              height="5"
+            />
+          </g>
+        </svg>
       </div>
 
       <div class="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
@@ -115,29 +156,38 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.iss-map__grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(color-mix(in srgb, var(--term-border) 70%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--term-border) 70%, transparent) 1px, transparent 1px);
-  background-size: 12.5% 25%;
-  opacity: 0.55;
+.iss-map__svg {
+  display: block;
+}
+
+.iss-map__grid line {
+  stroke: var(--term-border);
+  stroke-width: 0.4;
+  opacity: 0.7;
+}
+
+.iss-map__land path {
+  fill: color-mix(in srgb, var(--term-fg) 16%, transparent);
+  stroke: var(--term-fg-dim);
+  stroke-width: 0.55;
+  stroke-linejoin: round;
 }
 
 .iss-map__dot {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  margin: -4px 0 0 -4px;
-  border-radius: 1px;
-  background: var(--term-fg-bright);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--term-fg) 25%, transparent);
-  transition: left 0.8s ease, top 0.8s ease;
+  fill: var(--term-fg-bright);
+  stroke: var(--term-bg);
+  stroke-width: 0.6;
+  transition: x 0.8s ease, y 0.8s ease;
+}
+
+.iss-map__pulse {
+  fill: color-mix(in srgb, var(--term-fg) 22%, transparent);
+  transition: cx 0.8s ease, cy 0.8s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .iss-map__dot {
+  .iss-map__dot,
+  .iss-map__pulse {
     transition: none;
   }
 }

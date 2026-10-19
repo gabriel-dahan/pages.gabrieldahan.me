@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-type Coin = { price: number | null; change24h: number | null }
-
 type MarketsData = {
-  bitcoin: Coin
-  ethereum: Coin
+  symbol: string
+  name: string
+  price: number | null
+  change1d: number | null
+  changePeriod: number | null
+  periodLabel: string
+  currency: string
   sparkline: number[]
   meta: string
 }
@@ -21,7 +24,7 @@ const sparkPoints = computed(() => {
   const max = Math.max(...pts)
   const span = max - min || 1
   const w = 100
-  const h = 36
+  const h = 40
   return pts
     .map((v, i) => {
       const x = (i / (pts.length - 1)) * w
@@ -31,11 +34,16 @@ const sparkPoints = computed(() => {
     .join(' ')
 })
 
-const btcUp = computed(() => (data.value?.bitcoin.change24h ?? 0) >= 0)
+const dayUp = computed(() => (data.value?.change1d ?? 0) >= 0)
+const periodUp = computed(() => (data.value?.changePeriod ?? 0) >= 0)
 
-function fmtUsd(n: number | null) {
+function fmtPrice(n: number | null, currency: string) {
   if (n == null) return '—'
-  return n.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+  return n.toLocaleString(undefined, {
+    style: 'currency',
+    currency: currency || 'USD',
+    maximumFractionDigits: 2,
+  })
 }
 
 function fmtChange(n: number | null) {
@@ -72,24 +80,27 @@ onMounted(load)
     <p v-else-if="error" class="term-error text-sm flex-grow">err: {{ error }}</p>
     <template v-else-if="data">
       <div class="space-y-3 text-sm flex-grow">
-        <div class="flex items-baseline justify-between gap-2">
-          <span class="term-dim">BTC</span>
-          <span class="term-bright tabular-nums font-semibold">{{ fmtUsd(data.bitcoin.price) }}</span>
-        </div>
-        <div class="flex items-baseline justify-between gap-2">
-          <span class="term-muted text-xs">24h</span>
+        <div class="flex items-start justify-between gap-2">
+          <div class="min-w-0">
+            <p class="term-bright font-semibold">{{ data.name }}</p>
+            <p class="term-muted text-xs mt-0.5">{{ data.symbol }} · ETF proxy</p>
+          </div>
           <span
-            class="text-xs tabular-nums"
-            :class="btcUp ? 'term-bright' : 'term-error'"
+            class="text-xs tabular-nums shrink-0"
+            :class="dayUp ? 'term-bright' : 'term-error'"
           >
-            {{ fmtChange(data.bitcoin.change24h) }}
+            {{ fmtChange(data.change1d) }} 1d
           </span>
         </div>
 
+        <p class="term-bright text-2xl sm:text-3xl tabular-nums font-semibold tracking-tight">
+          {{ fmtPrice(data.price, data.currency) }}
+        </p>
+
         <svg
           v-if="sparkPoints"
-          class="w-full mt-1"
-          viewBox="0 0 100 36"
+          class="w-full"
+          viewBox="0 0 100 40"
           preserveAspectRatio="none"
           aria-hidden="true"
         >
@@ -102,17 +113,11 @@ onMounted(load)
           />
         </svg>
 
-        <div class="flex items-baseline justify-between gap-2 pt-2 border-t border-[var(--term-border)]">
-          <span class="term-dim">ETH</span>
-          <div class="text-right">
-            <p class="tabular-nums">{{ fmtUsd(data.ethereum.price) }}</p>
-            <p
-              class="text-xs tabular-nums"
-              :class="(data.ethereum.change24h ?? 0) >= 0 ? 'term-bright' : 'term-error'"
-            >
-              {{ fmtChange(data.ethereum.change24h) }}
-            </p>
-          </div>
+        <div class="flex items-baseline justify-between gap-2 pt-2 border-t border-[var(--term-border)] text-xs">
+          <span class="term-dim">{{ data.periodLabel }} change</span>
+          <span class="tabular-nums" :class="periodUp ? 'term-bright' : 'term-error'">
+            {{ fmtChange(data.changePeriod) }}
+          </span>
         </div>
       </div>
     </template>

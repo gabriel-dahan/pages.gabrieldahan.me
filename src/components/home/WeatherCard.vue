@@ -28,15 +28,11 @@ const windWidth = computed(() => {
   return `${Math.min(100, Math.round((w / 60) * 100))}%`
 })
 
-async function load(lat?: number, lon?: number) {
+async function load() {
   loading.value = true
   error.value = ''
   try {
-    const qs =
-      lat != null && lon != null
-        ? `?lat=${encodeURIComponent(String(lat))}&lon=${encodeURIComponent(String(lon))}`
-        : ''
-    const res = await fetch(`/api/toys/weather${qs}`)
+    const res = await fetch('/api/toys/weather')
     const json = await res.json()
     if (!res.ok) throw new Error(json.error || 'failed')
     data.value = json
@@ -47,19 +43,7 @@ async function load(lat?: number, lon?: number) {
   }
 }
 
-function requestLocation() {
-  if (!navigator.geolocation) {
-    load()
-    return
-  }
-  navigator.geolocation.getCurrentPosition(
-    (pos) => load(pos.coords.latitude, pos.coords.longitude),
-    () => load(),
-    { enableHighAccuracy: false, timeout: 6000, maximumAge: 10 * 60 * 1000 },
-  )
-}
-
-onMounted(requestLocation)
+onMounted(load)
 </script>
 
 <template>
@@ -67,7 +51,7 @@ onMounted(requestLocation)
     <p class="term-dim text-xs mb-3">$ curl /api/toys/weather</p>
 
     <div v-if="loading" class="text-sm term-dim flex-grow">
-      locating<span class="cursor-blink" aria-hidden="true" />
+      resolving ip<span class="cursor-blink" aria-hidden="true" />
     </div>
     <p v-else-if="error" class="term-error text-sm flex-grow">err: {{ error }}</p>
     <template v-else-if="data">
@@ -111,7 +95,7 @@ onMounted(requestLocation)
 
     <div class="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-[var(--term-border)]">
       <span class="term-muted text-xs truncate">{{ data?.meta || '—' }}</span>
-      <button type="button" class="term-btn text-xs py-1" :disabled="loading" @click="requestLocation">
+      <button type="button" class="term-btn text-xs py-1" :disabled="loading" @click="load">
         $ refresh
       </button>
     </div>
