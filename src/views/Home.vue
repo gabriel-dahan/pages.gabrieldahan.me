@@ -6,6 +6,9 @@ import ClockCard from '../components/home/ClockCard.vue'
 import HackathonsCard from '../components/home/HackathonsCard.vue'
 import ProjectsPreviewCard from '../components/home/ProjectsPreviewCard.vue'
 import ApiToysCard from '../components/home/ApiToysCard.vue'
+import WeatherCard from '../components/home/WeatherCard.vue'
+import IssCard from '../components/home/IssCard.vue'
+import MarketsCard from '../components/home/MarketsCard.vue'
 import CommentsSection from '../components/home/CommentsSection.vue'
 
 const step = ref(0)
@@ -107,6 +110,18 @@ const aboutDone = () => step.value >= lines.length + 2
         <HackathonsCard />
       </div>
       <ApiToysCard />
+    </section>
+
+    <section v-if="aboutDone()" class="w-full space-y-4 term-fade-in">
+      <h2 class="app__subtitle mb-0">
+        <span class="term-dim">$</span> ls ./live_feeds
+      </h2>
+      <p class="term-dim text-sm">live data · proxied through /api/toys</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 w-full">
+        <WeatherCard />
+        <IssCard />
+        <MarketsCard />
+      </div>
     </section>
 
     <CommentsSection v-if="aboutDone()" />

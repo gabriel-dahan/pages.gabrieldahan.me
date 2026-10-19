@@ -277,6 +277,200 @@ app.get('/api/toys/joke', async (_req, res) => {
   }
 })
 
+const WEATHER_LABELS: Record<number, string> = {
+  0: 'clear',
+  1: 'mainly clear',
+  2: 'partly cloudy',
+  3: 'overcast',
+  45: 'fog',
+  48: 'rime fog',
+  51: 'light drizzle',
+  53: 'drizzle',
+  55: 'heavy drizzle',
+  61: 'light rain',
+  63: 'rain',
+  65: 'heavy rain',
+  71: 'light snow',
+  73: 'snow',
+  75: 'heavy snow',
+  80: 'rain showers',
+  81: 'rain showers',
+  82: 'violent showers',
+  95: 'thunderstorm',
+  96: 'thunderstorm',
+  99: 'thunderstorm',
+}
+
+function weatherGlyph(code: number): string {
+  if (code === 0 || code === 1) return 'CLR'
+  if (code === 2 || code === 3) return 'CLD'
+  if (code === 45 || code === 48) return 'FOG'
+  if (code >= 71 && code <= 77) return 'SNW'
+  if (code >= 95) return 'STM'
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'RAIN'
+  return 'WX'
+}
+
+async function resolveCoords(
+  req: express.Request,
+): Promise<{ lat: number; lon: number; place: string; source: string }> {
+  const latQ = Number(req.query.lat)
+  const lonQ = Number(req.query.lon)
+  if (Number.isFinite(latQ) && Number.isFinite(lonQ) && Math.abs(latQ) <= 90 && Math.abs(lonQ) <= 180) {
+    let place = `${latQ.toFixed(2)}, ${lonQ.toFixed(2)}`
+    try {
+      const geo = await fetch(
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latQ}&longitude=${lonQ}&localityLanguage=en`,
+      )
+      if (geo.ok) {
+        const g = (await geo.json()) as { city?: string; locality?: string; countryName?: string }
+        const city = g.city || g.locality
+        if (city) place = g.countryName ? `${city}, ${g.countryName}` : city
+      }
+    } catch {
+      /* keep lat/lon label */
+    }
+    return { lat: latQ, lon: lonQ, place, source: 'geolocation' }
+  }
+
+  const forwarded = req.headers['x-forwarded-for']
+  const ipRaw = typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : req.socket.remoteAddress || ''
+  const ip = ipRaw.replace(/^::ffff:/, '')
+  if (ip && ip !== '127.0.0.1' && ip !== '::1' && !ip.startsWith('10.') && !ip.startsWith('192.168.')) {
+    try {
+      const r = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`)
+      if (r.ok) {
+        const data = (await r.json()) as {
+          success?: boolean
+          latitude?: number
+          longitude?: number
+          city?: string
+          country?: string
+        }
+        if (data.success && Number.isFinite(data.latitude) && Number.isFinite(data.longitude)) {
+          const place = [data.city, data.country].filter(Boolean).join(', ') || 'near you'
+          return { lat: data.latitude!, lon: data.longitude!, place, source: 'ip' }
+        }
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+
+  // ENSAI / Rennes fallback
+  return { lat: 48.1173, lon: -1.6778, place: 'Rennes, France', source: 'default' }
+}
+
+app.get('/api/toys/weather', async (req, res) => {
+  try {
+    const { lat, lon, place, source } = await resolveCoords(req)
+    const url =
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+      `&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,apparent_temperature` +
+      `&timezone=auto`
+    const r = await fetch(url)
+    if (!r.ok) throw new Error('upstream')
+    const data = (await r.json()) as {
+      current?: {
+        temperature_2m?: number
+        relative_humidity_2m?: number
+        weather_code?: number
+        wind_speed_10m?: number
+        apparent_temperature?: number
+        time?: string
+      }
+      current_units?: { temperature_2m?: string; wind_speed_10m?: string }
+      timezone?: string
+    }
+    const cur = data.current
+    if (!cur) throw new Error('no current')
+    const code = Number(cur.weather_code ?? -1)
+    res.json({
+      place,
+      source,
+      temperature: cur.temperature_2m ?? null,
+      feelsLike: cur.apparent_temperature ?? null,
+      humidity: cur.relative_humidity_2m ?? null,
+      wind: cur.wind_speed_10m ?? null,
+      weatherCode: code,
+      condition: WEATHER_LABELS[code] || 'unknown',
+      glyph: weatherGlyph(code),
+      units: {
+        temperature: data.current_units?.temperature_2m || '°C',
+        wind: data.current_units?.wind_speed_10m || 'km/h',
+      },
+      timezone: data.timezone || '',
+      meta: 'open-meteo.com',
+    })
+  } catch (err) {
+    console.error('Weather toy error:', err)
+    res.status(502).json({ error: 'Failed to fetch weather' })
+  }
+})
+
+app.get('/api/toys/iss', async (_req, res) => {
+  try {
+    const r = await fetch('https://api.wheretheiss.at/v1/satellites/25544')
+    if (!r.ok) throw new Error('upstream')
+    const data = (await r.json()) as {
+      latitude?: number
+      longitude?: number
+      altitude?: number
+      velocity?: number
+      visibility?: string
+    }
+    res.json({
+      latitude: data.latitude ?? null,
+      longitude: data.longitude ?? null,
+      altitudeKm: data.altitude ?? null,
+      velocityKmh: data.velocity ?? null,
+      visibility: data.visibility || '',
+      meta: 'wheretheiss.at',
+    })
+  } catch (err) {
+    console.error('ISS toy error:', err)
+    res.status(502).json({ error: 'Failed to fetch ISS position' })
+  }
+})
+
+app.get('/api/toys/markets', async (_req, res) => {
+  try {
+    const [priceRes, chartRes] = await Promise.all([
+      fetch(
+        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true',
+      ),
+      fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1'),
+    ])
+    if (!priceRes.ok) throw new Error('upstream price')
+    const prices = (await priceRes.json()) as Record<
+      string,
+      { usd?: number; usd_24h_change?: number }
+    >
+    let sparkline: number[] = []
+    if (chartRes.ok) {
+      const chart = (await chartRes.json()) as { prices?: [number, number][] }
+      const pts = chart.prices || []
+      const step = Math.max(1, Math.floor(pts.length / 32))
+      sparkline = pts.filter((_, i) => i % step === 0).map((p) => p[1])
+    }
+    res.json({
+      bitcoin: {
+        price: prices.bitcoin?.usd ?? null,
+        change24h: prices.bitcoin?.usd_24h_change ?? null,
+      },
+      ethereum: {
+        price: prices.ethereum?.usd ?? null,
+        change24h: prices.ethereum?.usd_24h_change ?? null,
+      },
+      sparkline,
+      meta: 'coingecko.com',
+    })
+  } catch (err) {
+    console.error('Markets toy error:', err)
+    res.status(502).json({ error: 'Failed to fetch markets' })
+  }
+})
+
 // --- Private Directory Endpoints ---
 
 app.post('/api/private/auth', (req, res) => {
